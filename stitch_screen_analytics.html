@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Analítica Predictiva &amp; AutoML - PredictiveSaaS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#4e5e85",
+                      "on-background": "#1b1c1c",
+                      "on-primary-fixed": "#001946",
+                      "secondary-fixed": "#dae2ff",
+                      "surface-variant": "#e4e2e1",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#ffdbcf",
+                      "surface-tint": "#2559bd",
+                      "tertiary-container": "#8b2e01",
+                      "surface-dim": "#dcd9d9",
+                      "surface": "#fbf9f8",
+                      "primary-container": "#0047ab",
+                      "surface-container-highest": "#e4e2e1",
+                      "primary-fixed": "#dae2ff",
+                      "secondary-container": "#c1d1ff",
+                      "on-tertiary": "#ffffff",
+                      "on-surface-variant": "#434653",
+                      "secondary-fixed-dim": "#b6c6f3",
+                      "outline": "#737784",
+                      "surface-container-low": "#f6f3f2",
+                      "on-secondary-container": "#4a5980",
+                      "on-tertiary-container": "#ffaa8a",
+                      "surface-container-high": "#eae8e7",
+                      "on-tertiary-fixed-variant": "#802900",
+                      "primary-fixed-dim": "#b1c5ff",
+                      "on-secondary-fixed": "#081a3e",
+                      "background": "#fbf9f8",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed-variant": "#00419e",
+                      "surface-bright": "#fbf9f8",
+                      "primary": "#00327d",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb59a",
+                      "on-primary-container": "#a5bdff",
+                      "on-primary": "#ffffff",
+                      "tertiary": "#651f00",
+                      "error-container": "#ffdad6",
+                      "inverse-primary": "#b1c5ff",
+                      "on-surface": "#1b1c1c",
+                      "surface-container-lowest": "#ffffff",
+                      "inverse-on-surface": "#f3f0f0",
+                      "on-secondary-fixed-variant": "#37466c",
+                      "outline-variant": "#c3c6d5",
+                      "on-secondary": "#ffffff",
+                      "surface-container": "#f0eded",
+                      "inverse-surface": "#303030",
+                      "on-tertiary-fixed": "#380d00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "container-max": "1280px",
+                      "margin-desktop": "32px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .chart-area {
+            fill: url(#areaGradient);
+            opacity: 0;
+            transition: opacity 1s ease-in 1.5s;
+        }
+        .chart-area.draw {
+            opacity: 1;
+        }
+        .chart-line {
+            fill: none;
+            stroke: #00327d;
+            stroke-width: 2;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 1.5s ease-out 0.5s;
+        }
+        .chart-line.draw {
+            stroke-dashoffset: 0;
+        }
+        .chart-line-forecast {
+            fill: none;
+            stroke: #00327d;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 1s ease-out 2s;
+        }
+        .chart-line-forecast.draw {
+            stroke-dashoffset: 0;
+        }
+        .chart-confidence {
+            fill: #b1c5ff;
+            opacity: 0;
+            transition: opacity 1s ease-in 2.5s;
+        }
+        .chart-confidence.draw {
+            opacity: 0.3;
+        }
+        .chart-grid {
+            stroke: #e4e2e1;
+            stroke-dasharray: 2,2;
+        }
+        .bar-chart-bg {
+            fill: #f6f3f2;
+            rx: 4;
+        }
+        .bar-chart-fill {
+            fill: #00327d;
+            rx: 4;
+            width: 0;
+            transition: width 1.5s ease-out 0.5s;
+        }
+
+        /* Choreographed Entrance */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+
+        /* Status Pulse */
+        .pulse-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(176, 96, 0, 0.4); }
+            70% { box-shadow: 0 0 0 4px rgba(176, 96, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(176, 96, 0, 0); }
+        }
+
+        /* Notification Nudge */
+        .nudge-bell {
+            animation: nudge 5s infinite;
+            transform-origin: top center;
+        }
+        @keyframes nudge {
+            0%, 90%, 100% { transform: rotate(0); }
+            92% { transform: rotate(10deg); }
+            94% { transform: rotate(-10deg); }
+            96% { transform: rotate(5deg); }
+            98% { transform: rotate(-5deg); }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            .fade-in-up, .chart-line, .chart-line-forecast, .chart-area, .chart-confidence, .bar-chart-fill, .pulse-badge, .nudge-bell {
+                animation: none !important;
+                transition: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+                stroke-dashoffset: 0 !important;
+            }
+            .chart-confidence { opacity: 0.3 !important; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full flex flex-col h-full w-64 border-r border-outline-variant bg-surface-container-lowest shadow-sm z-50 hidden md:flex fade-in-up delay-1">
+<div class="p-6 border-b border-outline-variant">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">PredictiveSaaS</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Industrial Intelligence</p>
+</div>
+<div class="flex-1 py-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 cursor-pointer active:scale-95 mx-2 rounded" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-primary font-bold bg-surface-container-high transition-all duration-200 cursor-pointer active:scale-95 mx-2 rounded" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-md text-label-md">Predictive Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 cursor-pointer active:scale-95 mx-2 rounded" href="#">
+<span class="material-symbols-outlined">database</span>
+<span class="font-label-md text-label-md">Data Ingestion</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200 cursor-pointer active:scale-95 mx-2 rounded" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+<div class="p-4 border-t border-outline-variant">
+<div class="flex items-center gap-3 px-2 cursor-pointer hover:bg-surface-container-low p-2 rounded transition-colors duration-200 active:scale-95">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold font-label-md">JD</div>
+<div class="flex-1 min-w-0">
+<p class="font-label-sm text-label-sm truncate">J. Doe</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-[10px] truncate">Admin</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="md:ml-64 flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-40 flex items-center justify-between px-margin-desktop h-16 w-full bg-surface shadow-sm fade-in-up delay-2">
+<div class="flex items-center gap-4 w-1/3">
+<button class="md:hidden text-on-surface-variant p-2 transition-transform active:scale-90">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="relative w-full max-w-md hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full font-body-sm text-body-sm focus:ring-1 focus:ring-primary focus:bg-surface-container-lowest transition-all duration-200 shadow-sm focus:shadow-md" placeholder="Search insights..." type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-center flex-1">
+<h1 class="font-headline-md text-headline-md text-on-background">Analítica Predictiva &amp; AutoML</h1>
+</div>
+<div class="flex items-center justify-end gap-2 w-1/3 text-on-surface-variant">
+<button class="p-2 hover:text-primary transition-all duration-200 cursor-pointer active:scale-90 rounded-full hover:bg-surface-container-low nudge-bell">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 hover:text-primary transition-all duration-200 cursor-pointer active:scale-90 rounded-full hover:bg-surface-container-low md:hidden">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 p-margin-desktop bg-[#F8FAFC]">
+<div class="max-w-container-max mx-auto flex flex-col gap-gutter">
+<!-- Controls Bar -->
+<div class="flex flex-col sm:flex-row items-center justify-between bg-surface-container-lowest p-4 rounded-lg shadow-sm border border-[#EEEEEE] gap-4 fade-in-up delay-3">
+<div class="flex items-center gap-4 w-full sm:w-auto">
+<label class="font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Seleccionar Métrica:</label>
+<select class="form-select bg-surface border border-outline-variant rounded text-body-md font-body-md focus:ring-primary focus:border-primary py-2 px-3 w-full sm:w-64 transition-shadow hover:shadow-sm cursor-pointer">
+<option>Eficiencia OEE</option>
+<option>Tiempo Medio Entre Fallas (MTBF)</option>
+<option>Consumo Energético</option>
+</select>
+</div>
+<div class="flex items-center gap-4 w-full sm:w-auto">
+<div class="relative w-full sm:w-auto hover:shadow-sm transition-shadow rounded">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">calendar_today</span>
+<input class="form-input bg-surface border border-outline-variant rounded pl-10 pr-4 py-2 text-body-sm font-body-sm focus:ring-primary focus:border-primary w-full sm:w-72 cursor-pointer" readonly="" type="text" value="Últimos 90 Días + 30 Días Pronóstico"/>
+</div>
+<button class="bg-surface-container-low hover:bg-surface-container-high text-on-surface p-2 rounded transition-all active:scale-95 border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Main Forecasting Chart -->
+<div class="bg-surface-container-lowest rounded-lg shadow-sm border border-[#EEEEEE] p-6 flex flex-col fade-in-up delay-4">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-background">Proyección de Eficiencia OEE</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Modelo ARIMA optimizado. Intervalo de confianza del 95%.</p>
+</div>
+<div class="flex gap-2">
+<div class="flex items-center gap-1">
+<div class="w-3 h-0.5 bg-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Histórico</span>
+</div>
+<div class="flex items-center gap-1 ml-3">
+<div class="w-3 h-0.5 bg-primary border-t border-dashed"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pronóstico</span>
+</div>
+</div>
+</div>
+<div class="w-full h-80 relative">
+<!-- Simulated Chart using SVG -->
+<svg class="w-full h-full preserve-aspect-ratio-none" viewbox="0 0 1000 300">
+<defs>
+<lineargradient id="areaGradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#00327d" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#00327d" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Lines -->
+<line class="chart-grid" x1="50" x2="950" y1="50" y2="50"></line>
+<line class="chart-grid" x1="50" x2="950" y1="125" y2="125"></line>
+<line class="chart-grid" x1="50" x2="950" y1="200" y2="200"></line>
+<line class="chart-grid" x1="50" x2="950" y1="275" y2="275"></line>
+<!-- Vertical Divider for Forecast -->
+<line opacity="0.5" stroke="#737784" stroke-dasharray="4,4" x1="700" x2="700" y1="20" y2="275"></line>
+<text fill="#737784" font-family="Inter" font-size="12" font-weight="600" x="710" y="30">INICIO PRONÓSTICO</text>
+<!-- Confidence Interval Area (Forecast) -->
+<path class="chart-confidence" d="M700,100 Q750,80 800,90 T900,70 L900,210 Q800,190 750,180 T700,100 Z" id="chart-confidence"></path>
+<!-- Historical Area -->
+<path class="chart-area" d="M50,275 L50,150 Q150,100 250,160 T450,120 T600,180 T700,100 L700,275 Z" id="chart-area"></path>
+<!-- Historical Line -->
+<path class="chart-line" d="M50,150 Q150,100 250,160 T450,120 T600,180 T700,100" id="chart-line"></path>
+<!-- Forecast Line -->
+<path class="chart-line-forecast" d="M700,100 Q750,120 800,130 T900,110" id="chart-line-forecast"></path>
+<!-- Y-Axis Labels -->
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="end" x="40" y="55">100%</text>
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="end" x="40" y="130">75%</text>
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="end" x="40" y="205">50%</text>
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="end" x="40" y="280">25%</text>
+<!-- X-Axis Labels -->
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="middle" x="50" y="295">Oct</text>
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="middle" x="266" y="295">Nov</text>
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="middle" x="483" y="295">Dic</text>
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="middle" x="700" y="295">Hoy</text>
+<text fill="#737784" font-family="Inter" font-size="12" text-anchor="middle" x="900" y="295">+30 D</text>
+</svg>
+</div>
+</div>
+<!-- Bottom Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter fade-in-up delay-5">
+<!-- Left Card: Models -->
+<div class="bg-surface-container-lowest rounded-lg shadow-sm border border-[#EEEEEE] flex flex-col h-[400px]">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<div>
+<h3 class="font-headline-md text-headline-lg-mobile md:text-headline-md text-on-background">Modelos ML Personalizados</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Gestión del pipeline AutoML</p>
+</div>
+<button class="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-md text-label-md py-2 px-4 rounded transition-all active:scale-95 flex items-center gap-2 hover:shadow-md">
+<span class="material-symbols-outlined text-sm">add</span>
+                                Entrenar Nuevo
+                            </button>
+</div>
+<div class="overflow-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low sticky top-0">
+<tr>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Nombre del Modelo</th>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Estado</th>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Precisión</th>
+<th class="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold text-right">Acción</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm divide-y divide-outline-variant">
+<tr class="hover:bg-[#F0F4F8] transition-colors cursor-pointer group">
+<td class="p-4 font-medium text-on-background group-hover:text-primary transition-colors">OEE_Pred_v2.4</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#e6f4ea] text-[#137333]">
+                                                Activo
+                                            </span>
+</td>
+<td class="p-4 text-on-background">94.2%</td>
+<td class="p-4 text-right">
+<button class="text-primary hover:text-on-primary-fixed-variant font-label-md text-label-md transition-colors">Gestionar</button>
+</td>
+</tr>
+<tr class="hover:bg-[#F0F4F8] transition-colors cursor-pointer group">
+<td class="p-4 font-medium text-on-background group-hover:text-primary transition-colors">FalloMotor_XGBoost</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#fef7e0] text-[#b06000] pulse-badge">
+                                                Entrenando
+                                            </span>
+</td>
+<td class="p-4 text-on-surface-variant">--</td>
+<td class="p-4 text-right">
+<button class="text-error hover:text-on-error-container font-label-md text-label-md transition-colors">Detener</button>
+</td>
+</tr>
+<tr class="hover:bg-[#F0F4F8] transition-colors cursor-pointer group">
+<td class="p-4 font-medium text-on-background group-hover:text-primary transition-colors">ConsumoEnergia_RNN</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#e6f4ea] text-[#137333]">
+                                                Activo
+                                            </span>
+</td>
+<td class="p-4 text-on-background">89.7%</td>
+<td class="p-4 text-right">
+<button class="text-primary hover:text-on-primary-fixed-variant font-label-md text-label-md transition-colors">Gestionar</button>
+</td>
+</tr>
+<tr class="hover:bg-[#F0F4F8] transition-colors cursor-pointer group">
+<td class="p-4 font-medium text-on-background group-hover:text-primary transition-colors">DesgasteRodamientos</td>
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-surface-variant text-on-surface-variant">
+                                                Inactivo
+                                            </span>
+</td>
+<td class="p-4 text-on-background">82.1%</td>
+<td class="p-4 text-right">
+<button class="text-primary hover:text-on-primary-fixed-variant font-label-md text-label-md transition-colors">Gestionar</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right Card: Influence Factors -->
+<div class="bg-surface-container-lowest rounded-lg shadow-sm border border-[#EEEEEE] flex flex-col h-[400px] p-6">
+<div class="mb-6">
+<h3 class="font-headline-md text-headline-lg-mobile md:text-headline-md text-on-background">Factores de Influencia</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">SHAP Values para OEE_Pred_v2.4</p>
+</div>
+<div class="flex-1 flex flex-col justify-around">
+<!-- Bar 1 -->
+<div class="group">
+<div class="flex justify-between font-label-sm text-label-sm mb-1 group-hover:-translate-y-0.5 transition-transform">
+<span class="text-on-background">Temperatura del Motor</span>
+<span class="text-on-surface-variant font-bold">42%</span>
+</div>
+<svg class="block" height="8" width="100%">
+<rect class="bar-chart-bg" height="8" width="100%"></rect>
+<rect class="bar-chart-fill bar-fill-target" data-width="42%" height="8"></rect>
+</svg>
+</div>
+<!-- Bar 2 -->
+<div class="group">
+<div class="flex justify-between font-label-sm text-label-sm mb-1 group-hover:-translate-y-0.5 transition-transform">
+<span class="text-on-background">Nivel de Vibración</span>
+<span class="text-on-surface-variant font-bold">28%</span>
+</div>
+<svg class="block" height="8" width="100%">
+<rect class="bar-chart-bg" height="8" width="100%"></rect>
+<rect class="bar-chart-fill bar-fill-target" data-width="28%" height="8"></rect>
+</svg>
+</div>
+<!-- Bar 3 -->
+<div class="group">
+<div class="flex justify-between font-label-sm text-label-sm mb-1 group-hover:-translate-y-0.5 transition-transform">
+<span class="text-on-background">Humedad Relativa</span>
+<span class="text-on-surface-variant font-bold">15%</span>
+</div>
+<svg class="block" height="8" width="100%">
+<rect class="bar-chart-bg" height="8" width="100%"></rect>
+<rect class="bar-chart-fill bar-fill-target" data-width="15%" height="8"></rect>
+</svg>
+</div>
+<!-- Bar 4 -->
+<div class="group">
+<div class="flex justify-between font-label-sm text-label-sm mb-1 group-hover:-translate-y-0.5 transition-transform">
+<span class="text-on-background">Tiempo desde Mantenimiento</span>
+<span class="text-on-surface-variant font-bold">10%</span>
+</div>
+<svg class="block" height="8" width="100%">
+<rect class="bar-chart-bg" height="8" width="100%"></rect>
+<rect class="bar-chart-fill bar-fill-target" data-width="10%" height="8"></rect>
+</svg>
+</div>
+<!-- Bar 5 -->
+<div class="group">
+<div class="flex justify-between font-label-sm text-label-sm mb-1 group-hover:-translate-y-0.5 transition-transform">
+<span class="text-on-background">Otros Factores</span>
+<span class="text-on-surface-variant font-bold">5%</span>
+</div>
+<svg class="block" height="8" width="100%">
+<rect class="bar-chart-bg" height="8" width="100%"></rect>
+<rect class="bar-chart-fill bar-fill-target" data-width="5%" height="8"></rect>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Only run animations if user hasn't requested reduced motion
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        if (!prefersReducedMotion) {
+            // Animate Chart Lines and Areas
+            setTimeout(() => {
+                document.getElementById('chart-line').classList.add('draw');
+                document.getElementById('chart-area').classList.add('draw');
+                document.getElementById('chart-line-forecast').classList.add('draw');
+                document.getElementById('chart-confidence').classList.add('draw');
+                
+                // Animate Progress Bars
+                const bars = document.querySelectorAll('.bar-fill-target');
+                bars.forEach(bar => {
+                    const targetWidth = bar.getAttribute('data-width');
+                    bar.style.width = targetWidth;
+                });
+            }, 100);
+        } else {
+             // For reduced motion, set widths immediately
+             const bars = document.querySelectorAll('.bar-fill-target');
+             bars.forEach(bar => {
+                 const targetWidth = bar.getAttribute('data-width');
+                 bar.style.width = targetWidth;
+             });
+        }
+    });
+</script>
+</body></html>
