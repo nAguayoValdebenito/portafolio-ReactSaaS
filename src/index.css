@@ -38,3 +38,146 @@
   50% { transform: translateY(-12px); }
   100% { transform: translateY(0px); }
 }
+
+/* Dashboard Animations */
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+@keyframes bell-shake {
+  0% { transform: rotate(0); }
+  20% { transform: rotate(15deg); }
+  40% { transform: rotate(-10deg); }
+  60% { transform: rotate(5deg); }
+  80% { transform: rotate(-5deg); }
+  100% { transform: rotate(0); }
+}
+
+@layer utilities {
+  .animate-draw-line {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: draw-line 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.5s;
+  }
+
+  .animate-pulse-dot {
+    animation: pulse-dot 2s infinite;
+  }
+
+  .hover-bell:hover .material-symbols-outlined {
+    animation: bell-shake 0.5s ease-in-out;
+  }
+
+  .chart-point {
+    transition: all 0.2s ease-out;
+    cursor: pointer;
+  }
+  .chart-point:hover {
+    r: 3;
+    fill: #00327d;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  
+  /* Analytics Workspace Styles */
+  .chart-area {
+      fill: url(#areaGradient);
+      opacity: 0;
+      transition: opacity 1s ease-in 1.5s;
+  }
+  .chart-area.draw {
+      opacity: 1;
+  }
+  .chart-line {
+      fill: none;
+      stroke: #00327d;
+      stroke-width: 2;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      transition: stroke-dashoffset 1.5s ease-out 0.5s;
+  }
+  .chart-line.draw {
+      stroke-dashoffset: 0;
+  }
+  .chart-line-forecast {
+      fill: none;
+      stroke: #00327d;
+      stroke-width: 2;
+      stroke-dasharray: 5,5;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      transition: stroke-dashoffset 1s ease-out 2s;
+  }
+  .chart-line-forecast.draw {
+      stroke-dashoffset: 0;
+  }
+  .chart-confidence {
+      fill: #b1c5ff;
+      opacity: 0;
+      transition: opacity 1s ease-in 2.5s;
+  }
+  .chart-confidence.draw {
+      opacity: 0.3;
+  }
+  .chart-grid {
+      stroke: #e4e2e1;
+      stroke-dasharray: 2,2;
+  }
+  .bar-chart-bg {
+      fill: #f6f3f2;
+      rx: 4;
+  }
+  .bar-chart-fill {
+      fill: #00327d;
+      rx: 4;
+      width: 0;
+      transition: width 1.5s ease-out 0.5s;
+  }
+  .pulse-badge {
+      animation: pulse 2s infinite;
+  }
+  .nudge-bell {
+      animation: nudge 5s infinite;
+      transform-origin: top center;
+  }
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(176, 96, 0, 0.4); }
+  70% { box-shadow: 0 0 0 4px rgba(176, 96, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(176, 96, 0, 0); }
+}
+
+@keyframes nudge {
+  0%, 90%, 100% { transform: rotate(0); }
+  92% { transform: rotate(10deg); }
+  94% { transform: rotate(-10deg); }
+  96% { transform: rotate(5deg); }
+  98% { transform: rotate(-5deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-draw-line,
+  .animate-pulse-dot {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
+  }
+  .hover-bell:hover .material-symbols-outlined {
+    animation: none;
+  }
+}

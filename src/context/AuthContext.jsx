@@ -40,22 +40,24 @@ export default function AuthProvider({ children }) {
           console.error("Error fetching user data from Firestore:", error);
           setCurrentUser({ ...user });
         }
+        setLoading(false);
       } else {
         setCurrentUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
   const value = {
-    currentUser
+    currentUser,
+    loading
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

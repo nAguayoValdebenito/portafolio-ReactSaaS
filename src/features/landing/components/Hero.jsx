@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
@@ -13,10 +14,10 @@ const Hero = () => {
             La plataforma inteligente que se conecta a tu operación, predice tendencias y asegura el cumplimiento de tus objetivos comerciales sin complicar a tu equipo.
           </p>
           <div className="pt-4 animate-fade-in-up animation-delay-200">
-            <button className="bg-primary-container text-on-primary font-label-md text-label-md px-8 py-4 rounded-lg shadow-sm hover:bg-primary transition-all duration-300 hover:scale-105 hover:shadow-lg inline-flex items-center gap-2">
+            <Link to="/register" className="bg-primary-container text-on-primary font-label-md text-label-md px-8 py-4 rounded-lg shadow-sm hover:bg-primary transition-all duration-300 hover:scale-105 hover:shadow-lg inline-flex items-center gap-2">
               Solicitar una Demo
               <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
+            </Link>
           </div>
         </div>
         {/* Right Mockup */}
