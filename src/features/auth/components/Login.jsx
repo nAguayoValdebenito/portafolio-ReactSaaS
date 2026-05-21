@@ -1,65 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../../../services/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import InputField from '../../../components/InputField';
+import Button from '../../../components/Button';
+import { useToast } from '../../../context/ToastContext';
+import { getFirebaseErrorMessage } from '../../../utils/firebaseErrors';
+import { useAuth } from '../../../context/AuthContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { currentUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
+  const hasNavigated = useRef(false);
+
+  useEffect(() => {
+    if (justLoggedIn && currentUser && !hasNavigated.current) {
+      hasNavigated.current = true;
+      showToast('¡Bienvenido a PredictiveSaaS!', 'success');
+      navigate('/dashboard');
+    }
+  }, [currentUser, justLoggedIn, navigate, showToast]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
+      setJustLoggedIn(true);
     } catch (err) {
       console.error(err);
-      setError('Error al iniciar sesión. Verifica tus credenciales.');
+      showToast(getFirebaseErrorMessage(err), 'error');
+      setIsLoading(false);
     }
   };
 
   return (
     <>
-      <style>{`
-        .opacity-0-init { opacity: 0; }
-        
-        .hover-underline-animation {
-            position: relative;
-        }
-        .hover-underline-animation::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            transform: scaleX(0);
-            height: 2px;
-            bottom: -2px;
-            left: 0;
-            background-color: currentColor;
-            transform-origin: bottom right;
-            transition: transform 0.25s ease-out;
-        }
-        .hover-underline-animation:hover::after {
-            transform: scaleX(1);
-            transform-origin: bottom left;
-        }
-
-        @keyframes fadeInUp {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
-        .animate-stagger-1 { animation: fadeInUp 0.6s ease-out 0.1s forwards; }
-        .animate-stagger-2 { animation: fadeInUp 0.6s ease-out 0.2s forwards; }
-        .animate-stagger-3 { animation: fadeInUp 0.6s ease-out 0.3s forwards; }
-        .animate-stagger-4 { animation: fadeInUp 0.6s ease-out 0.4s forwards; }
-        .animate-stagger-5 { animation: fadeInUp 0.6s ease-out 0.5s forwards; }
-        .animate-stagger-6 { animation: fadeInUp 0.6s ease-out 0.6s forwards; }
-      `}</style>
-
       <div className="bg-surface-bright text-on-surface min-h-screen flex items-center justify-center p-margin-mobile md:p-margin-desktop font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
         <main className="w-full max-w-md">
           {/* Main Card Container */}
@@ -75,66 +58,49 @@ export default function Login() {
             
             {/* Login Form */}
             <form className="flex flex-col gap-6" onSubmit={handleLogin}>
-              
-              {error && (
-                <div className="bg-error-container text-on-error-container p-3 rounded-lg text-sm text-center">
-                  {error}
-                </div>
-              )}
-
               <div className="flex flex-col gap-4">
-                {/* Email Field */}
-                <div className="flex flex-col gap-2 opacity-0-init animate-stagger-4">
-                  <label className="font-label-md text-label-md text-on-surface" htmlFor="email">Correo Electrónico</label>
-                  <input 
-                    className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 placeholder:text-outline shadow-sm focus:shadow-md" 
-                    id="email" 
-                    name="email" 
-                    placeholder="nombre@empresa.com" 
-                    required 
+                <div className="opacity-0-init animate-stagger-4">
+                  <InputField
+                    label="Correo Electrónico"
                     type="email"
+                    name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nombre@empresa.com"
+                    required
                   />
                 </div>
-                {/* Password Field */}
-                <div className="flex flex-col gap-2 opacity-0-init animate-stagger-5">
-                  <label className="font-label-md text-label-md text-on-surface" htmlFor="password">Contraseña</label>
-                  <div className="relative w-full">
-                    <input 
-                      className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 pr-10 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 placeholder:text-outline shadow-sm focus:shadow-md" 
-                      id="password" 
-                      name="password" 
-                      placeholder="••••••••" 
-                      required 
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <button 
-                      aria-label="Mostrar contraseña" 
-                      className="absolute inset-y-0 right-0 px-3 flex items-center text-outline-variant hover:text-primary transition-colors duration-200 group" 
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      <span className="material-symbols-outlined group-hover:scale-110 transition-transform duration-200" data-icon="visibility">
-                        {showPassword ? "visibility_off" : "visibility"}
-                      </span>
-                    </button>
-                  </div>
+                <div className="opacity-0-init animate-stagger-5">
+                  <InputField
+                    label="Contraseña"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    rightElement={
+                      <button
+                        aria-label="Mostrar contraseña"
+                        className="text-outline-variant hover:text-primary transition-colors duration-200 group"
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                         <span className="group-hover:scale-110 transition-transform duration-200">
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </span>
+                      </button>
+                    }
+                  />
                 </div>
               </div>
               {/* Options Row */}
               <div className="flex justify-end items-center opacity-0-init animate-stagger-6">
                 <a className="font-label-md text-label-md text-primary hover:text-primary-container transition-colors duration-300 hover-underline-animation" href="#">¿Olvidaste tu contraseña?</a>
               </div>
-              {/* Primary Action */}
-              <button 
-                className="w-full bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 mt-2 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 opacity-0-init animate-stagger-6" 
-                type="submit"
-              >
-                Iniciar Sesión
-              </button>
+              <div className="opacity-0-init animate-stagger-6">
+                <Button type="submit" isLoading={isLoading}>Iniciar Sesión</Button>
+              </div>
             </form>
             {/* Footer / Sign Up Link */}
             <div className="text-center mt-2 border-t border-outline-variant pt-6 opacity-0-init animate-stagger-6">

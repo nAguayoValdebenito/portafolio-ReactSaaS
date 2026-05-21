@@ -1,69 +1,107 @@
+import React, { useEffect, useState } from 'react';
+import MainPerformanceChart from '../components/MainPerformanceChart';
+import { useAuth } from '../../../context/AuthContext';
+import { getEnterpriseKPIs, getOperationalHistory, subscribeToEnterpriseAlerts } from '../services/dashboardService';
+import { TrendingUp, ArrowUp, ArrowDown, CloudOff, Filter } from 'lucide-react';
+
+const KPICard = React.memo(({ kpi, index }) => {
+  const delayClass = `delay-${(index + 2) * 100}`;
+  const isPositive = kpi.kpi_tendencia === 'up' || (kpi.kpi_variacion && parseFloat(kpi.kpi_variacion) > 0);
+
+  return (
+    <div className={`bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col gap-2 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up ${delayClass}`}>
+      <div className="flex justify-between items-start">
+        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{kpi.kpi_nombre}</span>
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+          <TrendingUp size={20} />
+        </div>
+      </div>
+      <div className="font-display-lg text-display-lg text-on-background">
+        {kpi.kpi_valor_actual}
+        {kpi.kpi_unidad && <span className="text-2xl text-on-surface-variant ml-1">{kpi.kpi_unidad}</span>}
+      </div>
+      {kpi.kpi_variacion && (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold w-fit ${isPositive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+          {isPositive ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+          {kpi.kpi_variacion}
+        </span>
+      )}
+    </div>
+  );
+});
+
 export default function Overview() {
+  const { currentUser } = useAuth();
+  
+  const [kpis, setKpis] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorLoading, setErrorLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentUser?.eid) {
+      const unsubscribe = subscribeToEnterpriseAlerts(currentUser.eid, (data) => {
+        setAlerts(data);
+      });
+      return () => unsubscribe();
+    }
+  }, [currentUser?.eid]);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (currentUser?.eid) {
+        setIsLoading(true);
+        setErrorLoading(false);
+        try {
+          const [kpisData, historyData] = await Promise.all([
+            getEnterpriseKPIs(currentUser.eid),
+            getOperationalHistory(currentUser.eid)
+          ]);
+          setKpis(kpisData);
+          setChartData(historyData);
+        } catch (error) {
+          console.error("Error fetching dashboard data", error);
+          setErrorLoading(true);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [currentUser?.eid]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (errorLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px] animate-fade-in-up">
+        <div className="bg-[#fef7e0] border border-[#f0df9f] p-8 rounded-xl text-center max-w-lg shadow-sm">
+          <CloudOff className="text-[#b06000] mb-4" size={48} />
+          <h3 className="text-[#b06000] font-headline-md mb-2">Error de Sincronización</h3>
+          <p className="text-[#b06000] text-body-md font-medium opacity-90">
+            Asegúrate de tener los índices de Firestore activos y extensiones de bloqueo de publicidad desactivadas en localhost.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-gutter">
-        {/* Card 1 – Eficiencia OEE */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col gap-2 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-200">
-          <div className="flex justify-between items-start">
-            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Eficiencia OEE</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[20px]">analytics</span>
-            </div>
-          </div>
-          <div className="font-display-lg text-display-lg text-on-background">87.4%</div>
-          <div className="flex items-center gap-1 text-[13px] text-green-700 font-medium">
-            <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
-            <span>+2.4% vs last month</span>
-          </div>
-        </div>
-
-        {/* Card 2 – Mermas de Producción */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col gap-2 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-300">
-          <div className="flex justify-between items-start">
-            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Mermas de Producción</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[20px]">trending_down</span>
-            </div>
-          </div>
-          <div className="font-display-lg text-display-lg text-on-background">1.2%</div>
-          <div className="flex items-center gap-1 text-[13px] text-green-700 font-medium">
-            <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
-            <span>-0.5% vs last month</span>
-          </div>
-        </div>
-
-        {/* Card 3 – Consumo Energético */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col gap-2 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-400">
-          <div className="flex justify-between items-start">
-            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Consumo Energético</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[20px]">bolt</span>
-            </div>
-          </div>
-          <div className="font-display-lg text-display-lg text-on-background">
-            420 <span className="text-2xl text-on-surface-variant">kWh</span>
-          </div>
-          <div className="flex items-center gap-1 text-[13px] text-yellow-600 font-medium">
-            <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
-            <span>+1.1% vs last month</span>
-          </div>
-        </div>
-
-        {/* Card 4 – Tiempo de Actividad */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col gap-2 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-500">
-          <div className="flex justify-between items-start">
-            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tiempo de Actividad</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[20px]">check_circle</span>
-            </div>
-          </div>
-          <div className="font-display-lg text-display-lg text-on-background">99.8%</div>
-          <div className="flex items-center gap-1 text-[13px] text-secondary font-medium">
-            <span className="material-symbols-outlined text-[16px]">horizontal_rule</span>
-            <span>Stable</span>
-          </div>
-        </div>
+        {kpis.map((kpi, index) => (
+          <KPICard key={kpi.id || index} kpi={kpi} index={index} />
+        ))}
       </div>
 
       {/* Content Area Grid */}
@@ -85,55 +123,8 @@ export default function Overview() {
           </div>
 
           {/* Chart */}
-          <div className="flex-1 relative min-h-[300px] border-l border-b border-outline-variant/50 flex items-end pt-4 pr-4">
-            {/* Y Axis Labels */}
-            <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-[11px] text-on-surface-variant font-medium py-4">
-              <span>100%</span>
-              <span>90%</span>
-              <span>80%</span>
-              <span>70%</span>
-            </div>
-
-            {/* Grid Lines */}
-            <div className="absolute inset-0 top-4 bottom-0 left-0 right-4 flex flex-col justify-between z-0">
-              <div className="border-t border-outline-variant/20 w-full"></div>
-              <div className="border-t border-outline-variant/20 w-full"></div>
-              <div className="border-t border-outline-variant/20 w-full"></div>
-              <div className="border-t border-outline-variant/20 w-full"></div>
-            </div>
-
-            {/* Target Line */}
-            <div className="absolute top-[20%] left-0 right-4 border-t-2 border-dashed border-outline/50 z-10"></div>
-
-            {/* Faux Data Line SVG */}
-            <svg className="absolute inset-0 h-full w-full z-20 overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-              <path
-                className="text-primary drop-shadow-md animate-draw-line"
-                d="M0,70 Q10,65 20,50 T40,45 T60,30 T80,35 T100,15"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-              />
-              {/* Data points */}
-              <circle className="chart-point fill-surface-container-lowest stroke-primary stroke-[1.5]" cx="0" cy="70" r="1.5"><title>Jan: 75%</title></circle>
-              <circle className="chart-point fill-surface-container-lowest stroke-primary stroke-[1.5]" cx="20" cy="50" r="1.5"><title>Feb: 82%</title></circle>
-              <circle className="chart-point fill-surface-container-lowest stroke-primary stroke-[1.5]" cx="40" cy="45" r="1.5"><title>Mar: 84%</title></circle>
-              <circle className="chart-point fill-surface-container-lowest stroke-primary stroke-[1.5]" cx="60" cy="30" r="1.5"><title>Apr: 89%</title></circle>
-              <circle className="chart-point fill-surface-container-lowest stroke-primary stroke-[1.5]" cx="80" cy="35" r="1.5"><title>May: 87%</title></circle>
-              <circle className="chart-point fill-surface-container-lowest stroke-primary stroke-[1.5]" cx="100" cy="15" r="1.5"><title>Jun: 95%</title></circle>
-            </svg>
-
-            {/* X Axis Labels */}
-            <div className="absolute -bottom-6 left-0 right-4 flex justify-between text-[11px] text-on-surface-variant font-medium px-2">
-              <span>Jan</span>
-              <span>Feb</span>
-              <span>Mar</span>
-              <span>Apr</span>
-              <span>May</span>
-              <span>Jun</span>
-            </div>
+          <div className="flex-1 min-h-[350px]">
+            <MainPerformanceChart data={chartData} />
           </div>
         </div>
 
@@ -141,51 +132,45 @@ export default function Overview() {
         <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-sm p-0 flex flex-col overflow-hidden animate-fade-in-up delay-500">
           <div className="p-5 border-b border-outline-variant/30 bg-surface-container-lowest flex justify-between items-center">
             <h2 className="font-headline-md text-headline-md text-on-background">Alertas Inteligentes</h2>
-            <button className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-              filter_list
+            <button className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+              <Filter size={20} />
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {/* Alert Item 1 (Critical) */}
-            <div className="p-4 border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors duration-200 ease-out flex gap-4 items-start cursor-pointer group">
-              <div className="mt-1 w-2.5 h-2.5 rounded-full bg-error flex-shrink-0 animate-pulse-dot"></div>
-              <div className="flex flex-col gap-1">
-                <span className="font-body-md text-body-md font-semibold text-on-background group-hover:text-primary transition-colors">Desviación en línea 4</span>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">Caída brusca de presión detectada. Requiere atención inmediata.</span>
-                <span className="font-label-sm text-label-sm text-outline mt-1 text-[11px]">Hace 10 min</span>
+            {alerts.length === 0 ? (
+              <div className="p-8 text-center text-on-surface-variant font-body-sm">
+                No hay alertas activas.
               </div>
-            </div>
+            ) : (
+              alerts.map((alert) => {
+                let dotClass = "bg-blue-500";
+                if (alert.alerta_nivel === 'critical') dotClass = "bg-error animate-pulse-dot";
+                else if (alert.alerta_nivel === 'warning') dotClass = "bg-yellow-500";
+                else if (alert.alerta_nivel === 'success') dotClass = "bg-green-500";
 
-            {/* Alert Item 2 (Warning) */}
-            <div className="p-4 border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors duration-200 ease-out flex gap-4 items-start cursor-pointer group">
-              <div className="mt-1 w-2.5 h-2.5 rounded-full bg-yellow-500 flex-shrink-0"></div>
-              <div className="flex flex-col gap-1">
-                <span className="font-body-md text-body-md font-semibold text-on-background group-hover:text-primary transition-colors">Mantenimiento preventivo sugerido</span>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">Motor principal M2 acercándose a límite de horas de operación.</span>
-                <span className="font-label-sm text-label-sm text-outline mt-1 text-[11px]">Hace 1 hora</span>
-              </div>
-            </div>
+                let timeString = '';
+                if (alert.alerta_timestamp) {
+                  const dateObj = typeof alert.alerta_timestamp.toDate === 'function' 
+                    ? alert.alerta_timestamp.toDate() 
+                    : new Date(alert.alerta_timestamp);
+                  if (!isNaN(dateObj.getTime())) {
+                    timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  }
+                }
 
-            {/* Alert Item 3 (Success) */}
-            <div className="p-4 border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors duration-200 ease-out flex gap-4 items-start cursor-pointer group">
-              <div className="mt-1 w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0"></div>
-              <div className="flex flex-col gap-1">
-                <span className="font-body-md text-body-md font-semibold text-on-background group-hover:text-primary transition-colors">Objetivo Q3 alcanzado</span>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">Producción de turno superó meta establecida en un 5%.</span>
-                <span className="font-label-sm text-label-sm text-outline mt-1 text-[11px]">Ayer, 14:30</span>
-              </div>
-            </div>
-
-            {/* Alert Item 4 (Critical) */}
-            <div className="p-4 hover:bg-surface-container-low transition-colors duration-200 ease-out flex gap-4 items-start cursor-pointer group">
-              <div className="mt-1 w-2.5 h-2.5 rounded-full bg-error flex-shrink-0"></div>
-              <div className="flex flex-col gap-1">
-                <span className="font-body-md text-body-md font-semibold text-on-background group-hover:text-primary transition-colors">Anomalía detectada en Sensor PT-12</span>
-                <span className="font-body-sm text-body-sm text-on-surface-variant">Lecturas fuera de rango operativo estándar durante &gt;5 min.</span>
-                <span className="font-label-sm text-label-sm text-outline mt-1 text-[11px]">Ayer, 09:15</span>
-              </div>
-            </div>
+                return (
+                  <div key={alert.id} className="p-4 border-b border-outline-variant/20 hover:bg-surface-container-low transition-colors duration-200 ease-out flex gap-4 items-start cursor-pointer group">
+                    <div className={`mt-1 w-2.5 h-2.5 rounded-full flex-shrink-0 ${dotClass}`}></div>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-body-md text-body-md font-semibold text-on-background group-hover:text-primary transition-colors">{alert.alerta_titulo}</span>
+                      <span className="font-body-sm text-body-sm text-on-surface-variant">{alert.alerta_detalle}</span>
+                      <span className="font-label-sm text-label-sm text-outline mt-1 text-[11px]">{timeString}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div className="p-4 border-t border-outline-variant/30 bg-surface-container-lowest text-center">

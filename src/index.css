@@ -5,7 +5,7 @@
 @layer utilities {
   .animate-fade-in-up {
       opacity: 0;
-      animation: fadeInUp 0.8s ease-out forwards;
+      animation: fadeInUp 0.6s ease-out forwards;
   }
   
   .animation-delay-100 { animation-delay: 100ms; }
@@ -166,6 +166,58 @@
   94% { transform: rotate(-10deg); }
   96% { transform: rotate(5deg); }
   98% { transform: rotate(-5deg); }
+}
+
+/* Auth Form Animations */
+@keyframes slideUpFade {
+  0%   { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInStagger {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@layer utilities {
+  .opacity-0-init { opacity: 0; }
+  .hover-underline-animation {
+    position: relative;
+  }
+  .hover-underline-animation::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: currentColor;
+    transform-origin: bottom right;
+    transition: transform 0.25s ease-out;
+  }
+  .hover-underline-animation:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
+  .animate-stagger-1 { animation: fadeInUp 0.6s ease-out 0.1s forwards; }
+  .animate-stagger-2 { animation: fadeInUp 0.6s ease-out 0.2s forwards; }
+  .animate-stagger-3 { animation: fadeInUp 0.6s ease-out 0.3s forwards; }
+  .animate-stagger-4 { animation: fadeInUp 0.6s ease-out 0.4s forwards; }
+  .animate-stagger-5 { animation: fadeInUp 0.6s ease-out 0.5s forwards; }
+  .animate-stagger-6 { animation: fadeInUp 0.6s ease-out 0.6s forwards; }
+
+  .animate-card-entrance {
+    animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .stagger-1 { animation: fadeInStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; opacity: 0; }
+  .stagger-2 { animation: fadeInStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0; }
+  .stagger-3 { animation: fadeInStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; opacity: 0; }
+  .stagger-4 { animation: fadeInStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards; opacity: 0; }
+  .stagger-5 { animation: fadeInStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; opacity: 0; }
+  .stagger-6 { animation: fadeInStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards; opacity: 0; }
+  .stagger-7 { animation: fadeInStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards; opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

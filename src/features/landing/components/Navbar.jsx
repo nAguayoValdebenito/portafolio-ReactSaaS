@@ -1,34 +1,89 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const navLinks = [
+    { label: 'Features', href: '#', active: true },
+    { label: 'Soluciones', href: '#', active: false },
+    { label: 'Precios', href: '#', active: false },
+  ];
+
   return (
-    <header className="bg-surface dark:bg-surface shadow-sm border-b border-outline-variant dark:border-outline docked full-width top-0 z-50 sticky">
-      <div className="flex justify-between items-center h-20 w-full px-margin-desktop max-w-container-max mx-auto">
-        <div className="flex items-center gap-gutter">
-          <Link to="/" className="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">PredictiveSaaS</Link>
-        </div>
-        <nav className="hidden md:flex gap-gutter items-center">
-          <a className="font-label-md text-label-md text-primary dark:text-primary-fixed font-bold pb-1 transition-all duration-150 relative group" href="#">
-            Features
-            <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary dark:bg-primary-fixed transform origin-left transition-transform duration-300 scale-x-100"></span>
-          </a>
-          <a className="font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200 relative group pb-1" href="#">
-            Soluciones
-            <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary dark:bg-primary-fixed transform origin-left transition-transform duration-300 scale-x-0 group-hover:scale-x-100"></span>
-          </a>
-          <a className="font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200 relative group pb-1" href="#">
-            Precios
-            <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary dark:bg-primary-fixed transform origin-left transition-transform duration-300 scale-x-0 group-hover:scale-x-100"></span>
-          </a>
+    <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-outline-variant dark:border-outline w-full sticky top-0 z-50">
+      <div className="flex justify-between items-center h-20 w-full px-6 md:px-margin-desktop max-w-container-max mx-auto">
+        <Link to="/" className="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">PredictiveSaaS</Link>
+
+        <nav className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className={`font-label-md text-label-md relative pb-1 transition-colors duration-200 group ${
+                link.active
+                  ? 'text-primary dark:text-primary-fixed font-bold'
+                  : 'text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed'
+              }`}
+            >
+              {link.label}
+              <span className={`absolute inset-x-0 bottom-0 h-0.5 bg-primary dark:bg-primary-fixed transform origin-left transition-transform duration-300 ${
+                link.active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+              }`} />
+            </a>
+          ))}
         </nav>
+
         <div className="hidden md:flex items-center gap-4">
           <Link to="/login" className="font-label-md text-label-md text-primary hover:text-primary-container transition-colors">Iniciar Sesión</Link>
-          <Link to="/register" className="font-label-md text-label-md bg-primary-container text-on-primary hover:bg-primary transition-all duration-300 hover:scale-105 hover:shadow-lg px-4 py-2 rounded-lg shadow-sm">Crear Cuenta</Link>
+          <Link to="/register" className="font-label-md text-label-md bg-[#1A5FFF] text-white hover:brightness-110 transition-all duration-300 hover:scale-105 hover:shadow-lg px-4 py-2 rounded-lg shadow-sm">Crear Cuenta</Link>
         </div>
-        <button className="md:hidden text-primary">
-          <span className="material-symbols-outlined">menu</span>
+
+        <button
+          className="md:hidden text-primary p-2"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
+          aria-expanded={isOpen}
+        >
+          <span className="material-symbols-outlined text-2xl">
+            {isOpen ? 'close' : 'menu'}
+          </span>
         </button>
+      </div>
+
+      <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+        isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+      }`}>
+        <div className="bg-white border-t border-outline-variant px-6 py-5 space-y-4 shadow-lg">
+          {navLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              className={`block font-label-md text-label-md py-2 transition-colors duration-200 ${
+                link.active
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant hover:text-primary'
+              }`}
+            >
+              {link.label}
+            </a>
+          ))}
+          <hr className="border-outline-variant" />
+          <Link
+            to="/login"
+            className="block text-center font-label-md text-label-md text-primary py-2 transition-colors hover:text-primary-container"
+            onClick={() => setIsOpen(false)}
+          >
+            Iniciar Sesión
+          </Link>
+          <Link
+            to="/register"
+            className="block text-center font-label-md text-label-md bg-[#1A5FFF] text-white hover:brightness-110 transition-all duration-300 px-4 py-2.5 rounded-lg shadow-sm"
+            onClick={() => setIsOpen(false)}
+          >
+            Crear Cuenta
+          </Link>
+        </div>
       </div>
     </header>
   );
