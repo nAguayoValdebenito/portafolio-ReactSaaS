@@ -3,6 +3,7 @@ import Hero from './components/Hero';
 import SocialProof from './components/SocialProof';
 import ServicesCarousel from './components/ServicesCarousel';
 import PricingCarousel from './components/PricingCarousel';
+import Footer from './components/Footer';
 
 function LandingPage() {
   return (
@@ -14,6 +15,7 @@ function LandingPage() {
         <ServicesCarousel />
         <PricingCarousel />
       </main>
+      <Footer />
     </div>
   );
 }

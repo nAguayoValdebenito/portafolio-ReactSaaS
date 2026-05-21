@@ -17,6 +17,23 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function PredictiveChart({ data = [] }) {
+  if (data.length === 0) {
+    return (
+      <div className="w-full h-[400px] bg-white rounded-xl border border-slate-200 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md px-6">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-300 animate-pulse" style={{ animationDelay: '0ms' }} />
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-300 animate-pulse" style={{ animationDelay: '200ms' }} />
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-300 animate-pulse" style={{ animationDelay: '400ms' }} />
+          </div>
+          <p className="font-body-sm text-body-sm text-slate-400 leading-relaxed">
+            Cargando proyecciones industriales y datos de entrenamiento de Machine Learning...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={400}>
       <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>

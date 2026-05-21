@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Filter, Plus, Loader2 } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { getEnterpriseMLModels } from '../services/dashboardService';
+import { usePredictions } from '../hooks/usePredictions';
 import PredictiveChart from '../components/PredictiveChart';
 
 const InfluenceBar = React.memo(({ label, value, color = '#1A5FFF' }) => (
@@ -62,6 +63,8 @@ export default function AnalyticsWorkspace() {
   const { currentUser } = useAuth();
   const [mlModels, setMlModels] = useState([]);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
+  
+  const { data: rawPredictionData, isLoading: isLoadingPredictions } = usePredictions(currentUser?.eid);
 
   useEffect(() => {
     if (!currentUser?.eid) return;
@@ -90,21 +93,11 @@ export default function AnalyticsWorkspace() {
     actionLabel: 'Gestionar',
   }));
 
-  const predictionData = [
-    { name: 'Oct', actualValue: 74, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'Nov', actualValue: 78, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'Dic', actualValue: 82, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'Ene', actualValue: 79, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'Feb', actualValue: 85, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'Mar', actualValue: 88, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'Abr', actualValue: 91, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'May', actualValue: 87, predictedValue: null, p10_lower: null, p90_upper: null },
-    { name: 'Hoy', actualValue: 90, predictedValue: 90, p10_lower: 90, p90_upper: 90 },
-    { name: '+7 D', actualValue: null, predictedValue: 91, p10_lower: 87, p90_upper: 94 },
-    { name: '+14 D', actualValue: null, predictedValue: 89, p10_lower: 84, p90_upper: 93 },
-    { name: '+21 D', actualValue: null, predictedValue: 92, p10_lower: 86, p90_upper: 96 },
-    { name: '+30 D', actualValue: null, predictedValue: 93, p10_lower: 86, p90_upper: 97 },
-  ];
+  // Map the timestamp to 'name' so the Recharts XAxis can render it natively
+  const predictionData = rawPredictionData?.map(d => ({
+    ...d,
+    name: d.name || d.timestamp
+  })) || [];
 
   const influenceFactors = [
     { label: 'Temperatura del Motor', value: 42 },

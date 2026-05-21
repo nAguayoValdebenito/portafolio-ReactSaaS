@@ -96,7 +96,7 @@ export default function Login() {
               </div>
               {/* Options Row */}
               <div className="flex justify-end items-center opacity-0-init animate-stagger-6">
-                <a className="font-label-md text-label-md text-primary hover:text-primary-container transition-colors duration-300 hover-underline-animation" href="#">¿Olvidaste tu contraseña?</a>
+                <Link to="/forgot-password" className="text-sm text-[#1A5FFF] hover:text-blue-700 transition-all duration-200 ease-out hover:scale-105 inline-block">¿Olvidaste tu contraseña?</Link>
               </div>
               <div className="opacity-0-init animate-stagger-6">
                 <Button type="submit" isLoading={isLoading}>Iniciar Sesión</Button>

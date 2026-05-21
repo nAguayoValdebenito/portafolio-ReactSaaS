@@ -28,11 +28,11 @@ const SocialProof = () => {
       <div className="max-w-container-max mx-auto px-margin-desktop text-center">
         <p className="font-label-sm text-label-sm text-on-surface-variant mb-8 tracking-widest uppercase">Diseñado para la industria moderna</p>
         <div className="flex flex-wrap justify-center items-center gap-12 opacity-50 grayscale transition-all duration-500 hover:opacity-70">
-          <span className="font-headline-md text-headline-md font-bold">AcmeCorp</span>
-          <span className="font-headline-md text-headline-md font-bold">Globex</span>
-          <span className="font-headline-md text-headline-md font-bold">Soylent</span>
-          <span className="font-headline-md text-headline-md font-bold">Initech</span>
-          <span className="font-headline-md text-headline-md font-bold">Umbrella</span>
+          <span role="img" aria-label="Partner company logo" className="font-headline-md text-headline-md font-bold">AcmeCorp</span>
+          <span role="img" aria-label="Partner company logo" className="font-headline-md text-headline-md font-bold">Globex</span>
+          <span role="img" aria-label="Partner company logo" className="font-headline-md text-headline-md font-bold">Soylent</span>
+          <span role="img" aria-label="Partner company logo" className="font-headline-md text-headline-md font-bold">Initech</span>
+          <span role="img" aria-label="Partner company logo" className="font-headline-md text-headline-md font-bold">Umbrella</span>
         </div>
       </div>
     </section>

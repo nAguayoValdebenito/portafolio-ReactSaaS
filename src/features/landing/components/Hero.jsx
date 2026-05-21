@@ -1,10 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { ArrowRight, CheckCircle } from 'lucide-react';
+import Button from '../../../components/Button';
 
 const Hero = () => {
+  const navigate = useNavigate();
   return (
     <section className="w-full px-margin-desktop py-20 max-w-container-max mx-auto overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Left Content */}
         <div className="flex flex-col gap-6">
           <h1 className="font-display-lg text-display-lg text-primary animate-fade-in-up">
@@ -14,10 +17,9 @@ const Hero = () => {
             La plataforma inteligente que se conecta a tu operación, predice tendencias y asegura el cumplimiento de tus objetivos comerciales sin complicar a tu equipo.
           </p>
           <div className="pt-4 animate-fade-in-up animation-delay-200">
-            <Link to="/register" className="bg-primary-container text-on-primary font-label-md text-label-md px-8 py-4 rounded-lg shadow-sm hover:bg-primary transition-all duration-300 hover:scale-105 hover:shadow-lg inline-flex items-center gap-2">
-              Solicitar una Demo
-              <span className="material-symbols-outlined">arrow_forward</span>
-            </Link>
+            <Button variant="primary" className="w-auto" onClick={() => navigate('/register')}>
+              Solicitar una Demo <ArrowRight size={24} />
+            </Button>
           </div>
         </div>
         {/* Right Mockup */}
@@ -60,7 +62,7 @@ const Hero = () => {
           {/* Popup Alert */}
           <div className="absolute bottom-4 right-4 bg-surface-container-lowest border border-outline-variant rounded-lg p-3 shadow-md flex items-center gap-3 animate-pulse">
             <div className="w-8 h-8 rounded-full bg-[#E6F4EA] flex items-center justify-center text-[#006837]">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              <CheckCircle size={20} fill="currentColor" />
             </div>
             <div>
               <span className="font-label-md text-label-md text-on-surface block">Objetivo Q3 Alcanzado</span>
