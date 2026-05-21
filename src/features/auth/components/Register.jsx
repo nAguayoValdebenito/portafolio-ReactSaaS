@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '../../../services/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser, sendEmailVerification } from 'firebase/auth';
 import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import InputField from '../../../components/InputField';
 import Button from '../../../components/Button';
 import { useToast } from '../../../context/ToastContext';
 import { getFirebaseErrorMessage } from '../../../utils/firebaseErrors';
+import { sanitizeInput } from '../../../utils/sanitizer';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
@@ -24,28 +25,39 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
 
+    let createdUser = null;
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const { uid } = userCredential.user;
+      createdUser = userCredential.user;
+      const { uid } = createdUser;
 
       const eid = 'emp_' + crypto.randomUUID();
 
       const batch = writeBatch(db);
 
       batch.set(doc(db, 'empresas', eid), {
-        empresa_nombre,
+        eid,
+        empresa_nombre: sanitizeInput(empresa_nombre),
         empresa_rubro: 'General',
         empresa_fecha_creacion: new Date(),
       });
 
       batch.set(doc(db, 'usuarios', uid), {
         eid,
-        usuario_nombre,
+        usuario_nombre: sanitizeInput(usuario_nombre),
         usuario_email: email,
         usuario_rol: 'administrador',
       });
 
-      await batch.commit();
+      try {
+        await batch.commit();
+      } catch (batchError) {
+        await deleteUser(createdUser);
+        throw batchError;
+      }
+
+      await sendEmailVerification(createdUser);
 
       showToast('¡Bienvenido a PredictiveSaaS!', 'success');
       setLoading(false);

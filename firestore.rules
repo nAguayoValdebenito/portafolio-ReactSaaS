@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default rule: completely block anonymous or unauthenticated requests across all collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserEid() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.eid;
+    }
+
+    // Usuarios collection: A logged-in user can only read/write their own document
+    match /usuarios/{uid} {
+      allow read, write: if isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Corporate-scoped multi-tenant collections
+    match /{collection}/{document} {
+      // Apply strict eid isolation for the specific collections
+      allow read: if isAuthenticated() 
+                  && collection in ['empresas', 'kpis', 'alertas', 'modelos_ml', 'predicciones', 'registros_operativos', 'audit_logs'] 
+                  && getUserEid() == resource.data.eid;
+                  
+      allow update, delete: if isAuthenticated() 
+                  && collection in ['empresas', 'kpis', 'alertas', 'modelos_ml', 'predicciones', 'registros_operativos', 'audit_logs'] 
+                  && getUserEid() == resource.data.eid
+                  && getUserEid() == request.resource.data.eid;
+
+      // For document creation, resource does not exist yet
+      allow create: if isAuthenticated() 
+                  && collection in ['empresas', 'kpis', 'alertas', 'modelos_ml', 'predicciones', 'registros_operativos', 'audit_logs'] 
+                  && getUserEid() == request.resource.data.eid;
+    }
+  }
+}

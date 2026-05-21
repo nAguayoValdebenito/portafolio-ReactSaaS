@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
 
 const AuthContext = createContext();
@@ -11,50 +11,68 @@ export function useAuth() {
 
 export default function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoaded, setAuthLoaded] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoading(true);
-      if (user) {
-        try {
-          // Fetch the user's profile document from the 'usuarios' collection
-          const userDocRef = doc(db, 'usuarios', user.uid);
-          const userDocSnap = await getDoc(userDocRef);
+    let profileUnsubscribe;
 
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            // Merge the auth session payload with the Firestore record
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+      setAuthLoaded(true);
+
+      if (profileUnsubscribe) {
+        profileUnsubscribe();
+        profileUnsubscribe = null;
+      }
+
+      if (user) {
+        setProfileLoaded(false);
+        setAuthError(null);
+
+        const userDocRef = doc(db, 'usuarios', user.uid);
+        
+        profileUnsubscribe = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
             setCurrentUser({
               ...user,
-              eid: userData.eid,
-              usuario_nombre: userData.usuario_nombre,
-              usuario_email: userData.usuario_email,
-              usuario_rol: userData.usuario_rol,
-              ...userData // include any other potential user data
+              ...userData
             });
+            setProfileLoaded(true);
+            setAuthError(null);
           } else {
-            // Fallback if the user document doesn't exist yet
-            setCurrentUser({ ...user });
+            setCurrentUser(null);
+            setAuthError('Perfil de usuario no encontrado o incompleto.');
+            setProfileLoaded(true);
           }
-        } catch (error) {
+        }, (error) => {
           console.error("Error fetching user data from Firestore:", error);
-          setCurrentUser({ ...user });
-        }
-        setLoading(false);
+          setCurrentUser(null);
+          setAuthError('Error de sincronización con la base de datos.');
+          setProfileLoaded(true);
+        });
+
       } else {
         setCurrentUser(null);
-        setLoading(false);
+        setProfileLoaded(true);
+        setAuthError(null);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      authUnsubscribe();
+      if (profileUnsubscribe) profileUnsubscribe();
+    };
   }, []);
+
+  const loading = !authLoaded || !profileLoaded;
 
   const value = useMemo(() => ({
     currentUser,
-    loading
-  }), [currentUser, loading]);
+    loading,
+    authError
+  }), [currentUser, loading, authError]);
 
   return (
     <AuthContext.Provider value={value}>
