@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
+import Button from '../../../components/Button';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const navLinks = [
     { label: 'Features', href: '#', active: true },
@@ -35,8 +38,8 @@ const Navbar = () => {
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <Link to="/login" className="font-label-md text-label-md text-primary hover:text-primary-container transition-colors">Iniciar Sesión</Link>
-          <Link to="/register" className="font-label-md text-label-md bg-[#1A5FFF] text-white hover:brightness-110 transition-all duration-300 hover:scale-105 hover:shadow-lg px-4 py-2 rounded-lg shadow-sm">Crear Cuenta</Link>
+          <Button variant="secondary" className="w-auto whitespace-nowrap" onClick={() => navigate('/login')}>Iniciar Sesión</Button>
+          <Button variant="primary" className="w-auto border border-transparent whitespace-nowrap" onClick={() => navigate('/register')}>Crear Cuenta</Button>
         </div>
 
         <button
@@ -45,9 +48,7 @@ const Navbar = () => {
           aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={isOpen}
         >
-          <span className="material-symbols-outlined text-2xl">
-            {isOpen ? 'close' : 'menu'}
-          </span>
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
@@ -69,20 +70,8 @@ const Navbar = () => {
             </a>
           ))}
           <hr className="border-outline-variant" />
-          <Link
-            to="/login"
-            className="block text-center font-label-md text-label-md text-primary py-2 transition-colors hover:text-primary-container"
-            onClick={() => setIsOpen(false)}
-          >
-            Iniciar Sesión
-          </Link>
-          <Link
-            to="/register"
-            className="block text-center font-label-md text-label-md bg-[#1A5FFF] text-white hover:brightness-110 transition-all duration-300 px-4 py-2.5 rounded-lg shadow-sm"
-            onClick={() => setIsOpen(false)}
-          >
-            Crear Cuenta
-          </Link>
+          <Button variant="secondary" className="whitespace-nowrap" onClick={() => { navigate('/login'); setIsOpen(false); }}>Iniciar Sesión</Button>
+          <Button variant="primary" className="border border-transparent whitespace-nowrap" onClick={() => { navigate('/register'); setIsOpen(false); }}>Crear Cuenta</Button>
         </div>
       </div>
     </header>
