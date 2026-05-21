@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import AuthProvider from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './features/auth/components/ProtectedRoute';
 import LandingPage from './features/landing/LandingPage';
 import Login from './features/auth/components/Login';
 import Register from './features/auth/components/Register';
@@ -13,8 +13,8 @@ import DataIntegration from './features/dashboard/views/DataIntegration';
 function App() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans antialiased">
-      <AuthProvider>
         <BrowserRouter>
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
@@ -27,8 +27,8 @@ function App() {
               </Route>
             </Route>
           </Routes>
+          </ErrorBoundary>
         </BrowserRouter>
-      </AuthProvider>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../services/firebase';
@@ -15,6 +15,7 @@ export default function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setLoading(true);
       if (user) {
         try {
           // Fetch the user's profile document from the 'usuarios' collection
@@ -50,10 +51,10 @@ export default function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     currentUser,
     loading
-  };
+  }), [currentUser, loading]);
 
   return (
     <AuthContext.Provider value={value}>
