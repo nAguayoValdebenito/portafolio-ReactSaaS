@@ -96,7 +96,7 @@ export default function Login() {
               </div>
               {/* Options Row */}
               <div className="flex justify-end items-center opacity-0-init animate-stagger-6">
-                <Link to="/forgot-password" className="text-sm text-[#1A5FFF] hover:text-blue-700 transition-all duration-200 ease-out hover:scale-105 inline-block">¿Olvidaste tu contraseña?</Link>
+                <Link to="/forgot-password" className="text-sm text-primary hover:text-primary-container transition-all duration-200 ease-out hover:scale-105 inline-block">¿Olvidaste tu contraseña?</Link>
               </div>
               <div className="opacity-0-init animate-stagger-6">
                 <Button type="submit" isLoading={isLoading}>Iniciar Sesión</Button>
@@ -112,7 +112,7 @@ export default function Login() {
           {/* Trust Indicators / Simple Footer below card */}
           <div className="text-center mt-8 opacity-0-init animate-stagger-6">
             <p className="font-label-sm text-label-sm text-outline">
-              © 2024 PredictiveSaaS. Acceso seguro.
+              &copy; {new Date().getFullYear()} PredictiveSaaS. Acceso seguro.
             </p>
           </div>
         </main>

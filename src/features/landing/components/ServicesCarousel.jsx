@@ -140,7 +140,7 @@ const ServicesCarousel = () => {
   }, [handleNext, handlePrev]);
 
   return (
-    <section ref={sectionRef} className="w-full py-20 px-margin-desktop bg-surface max-w-container-max mx-auto reveal-on-scroll overflow-x-hidden">
+    <section ref={sectionRef} id="soluciones" className="w-full py-20 px-margin-desktop bg-surface max-w-container-max mx-auto reveal-on-scroll overflow-x-hidden scroll-mt-28">
       <div className="flex justify-between items-end mb-12">
         <div>
           <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Plataforma de Inteligencia Industrial Unificada</h2>

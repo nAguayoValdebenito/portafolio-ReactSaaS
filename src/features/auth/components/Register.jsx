@@ -57,9 +57,23 @@ export default function Register() {
     }
   };
 
+  const getPasswordStrength = (pw) => {
+    if (!pw) return { score: 0, width: 0, label: '', barClass: '', textClass: '' };
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+
+    if (score === 1) return { score, width: 33, label: 'Débil', barClass: 'bg-error', textClass: 'text-error' };
+    if (score === 2) return { score, width: 66, label: 'Media', barClass: 'bg-secondary', textClass: 'text-secondary' };
+    return { score, width: 100, label: 'Fuerte', barClass: 'bg-primary', textClass: 'text-primary' };
+  };
+
+  const strength = getPasswordStrength(password);
+
   return (
     <>
-      <div className="bg-[#F9F9F9] text-on-surface min-h-screen flex items-center justify-center p-4 antialiased">
+      <div className="bg-surface-bright text-on-surface min-h-screen flex items-center justify-center p-4 antialiased">
         <div className="w-full max-w-lg bg-surface-container-lowest rounded-[12px] shadow-md p-8 md:p-10 border border-outline-variant/30 animate-card-entrance">
 
           {/* Logo */}
@@ -126,23 +140,32 @@ export default function Register() {
                 rightElement={
                   <button
                     aria-label="Mostrar contraseña"
-                    className="text-outline hover:text-[#1A5FFF] transition-colors duration-200"
+                    className="text-outline hover:text-primary transition-colors duration-200"
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     <span className="flex items-center">
-                      {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </span>
                   </button>
                 }
               />
             </div>
 
+            {password && (
+              <div className="stagger-6 -mt-3 px-0.5">
+                <div className="h-1.5 w-full bg-surface-container-low rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-500 ${strength.barClass}`} style={{ width: `${strength.width}%` }} />
+                </div>
+                <p className={`font-label-sm text-label-sm mt-1 ${strength.textClass}`}>{strength.label}</p>
+              </div>
+            )}
+
             {/* Terms */}
             <div className="flex items-start pt-2 stagger-7">
               <div className="flex items-center h-5">
                 <input
-                  className="w-4 h-4 rounded border-outline-variant text-[#1A5FFF] focus:ring-[#1A5FFF] focus:ring-offset-surface-container-lowest bg-surface-container-lowest cursor-pointer transition-colors duration-200"
+                  className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary focus:ring-offset-surface-container-lowest bg-surface-container-lowest cursor-pointer transition-colors duration-200"
                   id="terms"
                   name="terms"
                   type="checkbox"
@@ -169,7 +192,7 @@ export default function Register() {
               ¿Ya tienes una cuenta?{' '}
               <Link
                 to="/login"
-                className="text-[#1A5FFF] font-semibold hover:underline transition-colors duration-200 hover:text-[#1A5FFF]/80"
+                className="text-primary font-semibold hover:underline transition-colors duration-200 hover:text-primary-container"
               >
                 Inicia sesión aquí
               </Link>

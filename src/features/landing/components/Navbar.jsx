@@ -3,14 +3,37 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from '../../../components/Button';
 
+const scrollToSection = (e, targetId) => {
+  e.preventDefault();
+  
+  // Path B: Scrub hash from URL to keep it clean and prevent frozen hashes
+  if (window.location.hash) {
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+
+  const element = document.getElementById(targetId);
+  if (element) {
+    setTimeout(() => {
+      const headerOffset = 80; // h-20 tailwind class is 80px
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }, 50);
+  }
+};
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
   const navLinks = [
-    { label: 'Features', href: '#', active: true },
-    { label: 'Soluciones', href: '#', active: false },
-    { label: 'Precios', href: '#', active: false },
+    { label: 'Features', targetId: 'features' },
+    { label: 'Soluciones', targetId: 'soluciones' },
+    { label: 'Precios', targetId: 'precios' },
   ];
 
   return (
@@ -20,20 +43,14 @@ const Navbar = () => {
 
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a
+            <button
               key={link.label}
-              href={link.href}
-              className={`font-label-md text-label-md relative pb-1 transition-colors duration-200 group ${
-                link.active
-                  ? 'text-primary dark:text-primary-fixed font-bold'
-                  : 'text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed'
-              }`}
+              onClick={(e) => scrollToSection(e, link.targetId)}
+              className="font-label-md text-label-md relative pb-1 transition-colors duration-200 group text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed"
             >
               {link.label}
-              <span className={`absolute inset-x-0 bottom-0 h-0.5 bg-primary dark:bg-primary-fixed transform origin-left transition-transform duration-300 ${
-                link.active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-              }`} />
-            </a>
+              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary dark:bg-primary-fixed transform origin-left transition-transform duration-300 scale-x-0 group-hover:scale-x-100" />
+            </button>
           ))}
         </nav>
 
@@ -57,17 +74,13 @@ const Navbar = () => {
       }`}>
         <div className="bg-white border-t border-outline-variant px-6 py-5 space-y-4 shadow-lg">
           {navLinks.map((link) => (
-            <a
+            <button
               key={link.label}
-              href={link.href}
-              className={`block font-label-md text-label-md py-2 transition-colors duration-200 ${
-                link.active
-                  ? 'text-primary font-bold'
-                  : 'text-on-surface-variant hover:text-primary'
-              }`}
+              onClick={(e) => { scrollToSection(e, link.targetId); setIsOpen(false); }}
+              className="block w-full text-left font-label-md text-label-md py-2 transition-colors duration-200 text-on-surface-variant hover:text-primary"
             >
               {link.label}
-            </a>
+            </button>
           ))}
           <hr className="border-outline-variant" />
           <Button variant="secondary" className="whitespace-nowrap" onClick={() => { navigate('/login'); setIsOpen(false); }}>Iniciar Sesión</Button>

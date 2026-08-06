@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import MainPerformanceChart from '../components/MainPerformanceChart';
 import { useAuth } from '../../../context/AuthContext';
 import { getEnterpriseKPIs, getOperationalHistory, subscribeToEnterpriseAlerts } from '../services/dashboardService';
-import { TrendingUp, ArrowUp, ArrowDown, CloudOff, Filter } from 'lucide-react';
+import { TrendingUp, ArrowUp, ArrowDown, CloudOff, Filter, X } from 'lucide-react';
+
+const delayBase = [200, 300, 400, 500, 600];
 
 const KPICard = React.memo(({ kpi, index }) => {
-  const delayClass = `delay-${(index + 2) * 100}`;
   const isPositive = kpi.kpi_tendencia === 'up' || (kpi.kpi_variacion && parseFloat(kpi.kpi_variacion) > 0);
 
   return (
-    <div className={`bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col gap-2 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up ${delayClass}`}>
+    <div style={{ animationDelay: `${delayBase[index % delayBase.length]}ms` }} className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col gap-2 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up">
       <div className="flex justify-between items-start">
         <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">{kpi.kpi_nombre}</span>
         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -38,6 +40,7 @@ export default function Overview() {
   const [alerts, setAlerts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorLoading, setErrorLoading] = useState(false);
+  const [isAlertFilterOpen, setIsAlertFilterOpen] = useState(false);
 
   useEffect(() => {
     if (currentUser?.eid) {
@@ -132,9 +135,32 @@ export default function Overview() {
         <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-sm p-0 flex flex-col overflow-hidden animate-fade-in-up delay-500">
           <div className="p-5 border-b border-outline-variant/30 bg-surface-container-lowest flex justify-between items-center">
             <h2 className="font-headline-md text-headline-md text-on-background">Alertas Inteligentes</h2>
-            <button className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-              <Filter size={20} />
-            </button>
+            {isAlertFilterOpen && (
+              <div className="fixed inset-0 z-40" onClick={() => setIsAlertFilterOpen(false)} />
+            )}
+            <div className="relative">
+              <button onClick={() => setIsAlertFilterOpen(!isAlertFilterOpen)} aria-label="Filtrar alertas métricas" className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+                <Filter size={20} />
+              </button>
+              {isAlertFilterOpen && (
+                <div className="absolute right-0 top-8 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 p-4 w-56 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-label-sm text-label-sm text-slate-900 font-semibold">Filtrar Alertas</span>
+                    <button onClick={() => setIsAlertFilterOpen(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer">
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {['Todas', 'Críticas', 'Advertencias', 'Informativas'].map((f) => (
+                      <label key={f} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer hover:text-primary transition-colors">
+                        <input type="radio" name="alert-filter" defaultChecked={f === 'Todas'} className="text-primary focus:ring-primary" />
+                        {f}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -174,9 +200,9 @@ export default function Overview() {
           </div>
 
           <div className="p-4 border-t border-outline-variant/30 bg-surface-container-lowest text-center">
-            <button className="font-label-md text-label-md text-primary font-semibold hover:underline transition-all">
+            <Link to="/dashboard/alerts" className="font-label-md text-label-md text-primary font-semibold hover:underline transition-all inline-block">
               Ver todas las alertas
-            </button>
+            </Link>
           </div>
         </div>
       </div>

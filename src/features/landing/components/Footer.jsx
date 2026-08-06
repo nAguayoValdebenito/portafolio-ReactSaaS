@@ -1,23 +1,33 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Code2, Briefcase, Globe, Mail, MapPin } from 'lucide-react';
+
+const scrollToSection = (e, id) => {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.history.pushState(null, '', `#${id}`);
+  }
+};
 
 const footerLinks = {
   producto: [
-    { label: 'Características', href: '#' },
-    { label: 'Analítica', href: '#' },
-    { label: 'Precios', href: '#' },
+    { label: 'Características', href: '#features' },
+    { label: 'Analítica', href: '#soluciones' },
+    { label: 'Precios', href: '#precios' },
   ],
   compañia: [
-    { label: 'Términos de Servicio', href: '#' },
-    { label: 'Política de Privacidad', href: '#' },
-    { label: 'Contacto', href: '#' },
+    { label: 'Términos de Servicio', to: '/terms', type: 'route' },
+    { label: 'Política de Privacidad', to: '/privacy', type: 'route' },
+    { label: 'Contacto', href: 'mailto:soporte@predictivesaas.com', type: 'external' },
   ],
 };
 
 const socialIcons = [
-  { icon: Globe, href: '#', label: 'Twitter' },
-  { icon: Briefcase, href: '#', label: 'LinkedIn' },
-  { icon: Code2, href: '#', label: 'GitHub' },
+  { icon: Globe, href: 'https://twitter.com/predictivesaas', label: 'Twitter' },
+  { icon: Briefcase, href: 'https://linkedin.com/company/predictivesaas', label: 'LinkedIn' },
+  { icon: Code2, href: 'https://github.com/predictivesaas', label: 'GitHub' },
 ];
 
 const Footer = () => {
@@ -34,6 +44,8 @@ const Footer = () => {
               <a
                 key={label}
                 href={href}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={label}
                 className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-white transition-all duration-200"
               >
@@ -49,6 +61,7 @@ const Footer = () => {
             <a
               key={link.label}
               href={link.href}
+              onClick={(e) => scrollToSection(e, link.href.slice(1))}
               className="font-body-sm text-body-sm text-slate-400 hover:text-white transition-colors duration-200 w-fit"
             >
               {link.label}
@@ -58,15 +71,28 @@ const Footer = () => {
 
         <div className="flex flex-col gap-3">
           <span className="font-label-md text-label-md text-white font-semibold mb-1">Compañía</span>
-          {footerLinks.compañia.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="font-body-sm text-body-sm text-slate-400 hover:text-white transition-colors duration-200 w-fit"
-            >
-              {link.label}
-            </a>
-          ))}
+          {footerLinks.compañia.map((link) => {
+            if (link.type === 'route') {
+              return (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className="font-body-sm text-body-sm text-slate-400 hover:text-white transition-colors duration-200 w-fit"
+                >
+                  {link.label}
+                </Link>
+              );
+            }
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                className="font-body-sm text-body-sm text-slate-400 hover:text-white transition-colors duration-200 w-fit"
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </div>
 
         <div className="flex flex-col gap-3">

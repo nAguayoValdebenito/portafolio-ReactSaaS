@@ -174,3 +174,67 @@ export const subscribeToPredictions = (eid, callback) => {
 
   return unsubscribe;
 };
+
+export const subscribeToInfluenceFactors = (eid, callback) => {
+  const q = query(
+    collection(db, 'factores_influencia'),
+    where('eid', '==', eid),
+    orderBy('value', 'desc')
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const factors = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    callback(factors);
+  }, (error) => {
+    if (error.code === 'failed-precondition') {
+      console.error('Firebase Index Link (factores_influencia):', error);
+      // Fallback: simple query without orderBy while index is being built
+      const simpleQ = query(collection(db, 'factores_influencia'), where('eid', '==', eid));
+      onSnapshot(simpleQ, (snap) => {
+        const sortedFactors = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => (b.value || 0) - (a.value || 0));
+        callback(sortedFactors);
+      });
+    } else {
+      console.error('Firebase Index Link (factores_influencia):', error);
+    }
+  });
+
+  return unsubscribe;
+};
+
+export const subscribeToIntegrations = (eid, callback) => {
+  const q = query(
+    collection(db, 'integraciones'),
+    where('eid', '==', eid),
+    orderBy('lastSync', 'desc')
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const integrations = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    callback(integrations);
+  }, (error) => {
+    if (error.code === 'failed-precondition') {
+      console.error('Firebase Index Link (integraciones):', error);
+      // Fallback: simple query without orderBy while index is being built
+      const simpleQ = query(collection(db, 'integraciones'), where('eid', '==', eid));
+      onSnapshot(simpleQ, (snap) => {
+        const sortedIntegrations = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => {
+            const aTime = a.lastSync?.seconds || 0;
+            const bTime = b.lastSync?.seconds || 0;
+            return bTime - aTime;
+        });
+        callback(sortedIntegrations);
+      });
+    } else {
+      console.error('Firebase Index Link (integraciones):', error);
+    }
+  });
+
+  return unsubscribe;
+};

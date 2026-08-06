@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Filter, Plus, Loader2 } from 'lucide-react';
+import { Calendar, Filter, Plus, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { getEnterpriseMLModels } from '../services/dashboardService';
+import { getEnterpriseMLModels, subscribeToInfluenceFactors } from '../services/dashboardService';
 import { usePredictions } from '../hooks/usePredictions';
 import PredictiveChart from '../components/PredictiveChart';
 
@@ -11,13 +11,20 @@ const InfluenceBar = React.memo(({ label, value, color = '#1A5FFF' }) => (
       <span className="text-slate-700 font-medium">{label}</span>
       <span className="text-slate-600 font-bold">{value}%</span>
     </div>
-    <div className="w-full bg-slate-200 rounded-full h-2">
+    <div
+      role="progressbar"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`${label}: ${value}%`}
+      className="w-full bg-slate-200 rounded-full h-2"
+    >
       <div className="h-2 rounded-full transition-all duration-500" style={{ width: `${value}%`, backgroundColor: color }} />
     </div>
   </div>
 ));
 
-const ModelRow = React.memo(({ name, status, accuracy, actionLabel, actionVariant = 'primary' }) => {
+const ModelRow = React.memo(({ name, status, accuracy, actionLabel, actionVariant = 'primary', onAction }) => {
   const statusStyles = {
     active: 'bg-[#e6f4ea] text-[#137333]',
     training: 'bg-[#fef7e0] text-[#b06000] pulse-badge',
@@ -40,7 +47,7 @@ const ModelRow = React.memo(({ name, status, accuracy, actionLabel, actionVarian
       </td>
       <td className="p-4 text-on-background">{accuracy}</td>
       <td className="p-4 text-right">
-        <button className={`font-label-md text-label-md transition-colors ${
+        <button onClick={onAction} className={`font-label-md text-label-md transition-colors ${
           actionVariant === 'danger' ? 'text-error hover:text-on-error-container' : 'text-primary hover:text-on-primary-fixed-variant'
         }`}>
           {actionLabel}
@@ -64,7 +71,14 @@ export default function AnalyticsWorkspace() {
   const [mlModels, setMlModels] = useState([]);
   const [isLoadingModels, setIsLoadingModels] = useState(true);
   
+  const [influenceFactors, setInfluenceFactors] = useState([]);
+  const [isLoadingFactors, setIsLoadingFactors] = useState(true);
+  
   const { data: rawPredictionData, isLoading: isLoadingPredictions } = usePredictions(currentUser?.eid);
+
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [isTrainingWizardOpen, setIsTrainingWizardOpen] = useState(false);
+  const [managingModel, setManagingModel] = useState(null);
 
   useEffect(() => {
     if (!currentUser?.eid) return;
@@ -83,7 +97,17 @@ export default function AnalyticsWorkspace() {
         if (!cancelled) setIsLoadingModels(false);
       });
 
-    return () => { cancelled = true; };
+    const unsubscribeFactors = subscribeToInfluenceFactors(currentUser.eid, (factors) => {
+      if (!cancelled) {
+        setInfluenceFactors(factors);
+        setIsLoadingFactors(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribeFactors();
+    };
   }, [currentUser?.eid]);
 
   const models = mlModels.map((m) => ({
@@ -91,6 +115,7 @@ export default function AnalyticsWorkspace() {
     status: statusMap[m.modelo_estado] || 'inactive',
     accuracy: m.modelo_precision != null ? `${m.modelo_precision}%` : '—',
     actionLabel: 'Gestionar',
+    onAction: () => setManagingModel(m.modelo_nombre || 'Modelo'),
   }));
 
   // Map the timestamp to 'name' so the Recharts XAxis can render it natively
@@ -98,14 +123,6 @@ export default function AnalyticsWorkspace() {
     ...d,
     name: d.name || d.timestamp
   })) || [];
-
-  const influenceFactors = [
-    { label: 'Temperatura del Motor', value: 42 },
-    { label: 'Nivel de Vibración', value: 28 },
-    { label: 'Humedad Relativa', value: 15 },
-    { label: 'Tiempo desde Mantenimiento', value: 10 },
-    { label: 'Otros Factores', value: 5 },
-  ];
 
   return (
     <>
@@ -125,7 +142,7 @@ export default function AnalyticsWorkspace() {
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={16} />
               <input className="form-input bg-surface border border-outline-variant rounded pl-10 pr-4 py-2 text-body-sm font-body-sm focus:ring-primary focus:border-primary w-full sm:w-72 cursor-pointer" readOnly type="text" value="Últimos 90 Días + 30 Días Pronóstico" />
             </div>
-            <button className="bg-surface-container-low hover:bg-surface-container-high text-on-surface p-2 rounded transition-all active:scale-95 border border-outline-variant flex items-center justify-center">
+            <button onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)} aria-label="Filtrar análisis" className="bg-surface-container-low hover:bg-surface-container-high text-on-surface p-2 rounded transition-all active:scale-95 border border-outline-variant flex items-center justify-center">
               <Filter size={20} />
             </button>
           </div>
@@ -163,7 +180,7 @@ export default function AnalyticsWorkspace() {
                 <h3 className="font-headline-md text-headline-lg-mobile md:text-headline-md text-on-background">Modelos ML Personalizados</h3>
                 <p className="font-body-sm text-body-sm text-on-surface-variant">Gestión del pipeline AutoML</p>
               </div>
-              <button className="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-md text-label-md py-2 px-4 rounded transition-all active:scale-95 flex items-center gap-2 hover:shadow-md">
+              <button onClick={() => setIsTrainingWizardOpen(!isTrainingWizardOpen)} className="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-md text-label-md py-2 px-4 rounded transition-all active:scale-95 flex items-center gap-2 hover:shadow-md">
                 <Plus size={16} />
                 Entrenar Nuevo
               </button>
@@ -172,10 +189,10 @@ export default function AnalyticsWorkspace() {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-surface-container-low sticky top-0">
                   <tr>
-                    <th className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Nombre del Modelo</th>
-                    <th className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Estado</th>
-                    <th className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Precisión</th>
-                    <th className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold text-right">Acción</th>
+                    <th scope="col" className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Nombre del Modelo</th>
+                    <th scope="col" className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Estado</th>
+                    <th scope="col" className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold">Precisión</th>
+                    <th scope="col" className="p-4 font-label-sm text-label-sm text-on-surface-variant font-semibold text-right">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="font-body-sm text-body-sm divide-y divide-outline-variant">
@@ -210,14 +227,176 @@ export default function AnalyticsWorkspace() {
               <h3 className="font-headline-md text-headline-lg-mobile md:text-headline-md text-on-background">Factores de Influencia</h3>
               <p className="font-body-sm text-body-sm text-on-surface-variant">SHAP Values para OEE_Pred_v2.4</p>
             </div>
-            <div className="flex-1 flex flex-col justify-around">
-              {influenceFactors.map((factor, i) => (
-                <InfluenceBar key={i} {...factor} />
-              ))}
+            <div className="flex-1 flex flex-col justify-around overflow-hidden">
+              {isLoadingFactors ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="animate-pulse mb-4 last:mb-0">
+                    <div className="flex justify-between text-sm mb-2">
+                      <div className="h-4 w-1/3 bg-slate-200 rounded" />
+                      <div className="h-4 w-8 bg-slate-200 rounded" />
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                      <div className="h-2 rounded-full bg-slate-200" style={{ width: `${100 - i * 15}%` }} />
+                    </div>
+                  </div>
+                ))
+              ) : influenceFactors.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-on-surface-variant">
+                  <p className="font-body-sm text-body-sm">No hay factores de influencia registrados.</p>
+                </div>
+              ) : (
+                influenceFactors.map((factor, i) => (
+                  <InfluenceBar 
+                    key={factor.id || i} 
+                    label={factor.label || factor.nombre || 'Desconocido'} 
+                    value={factor.value || factor.valor || 0} 
+                    color={factor.color} 
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Filter Panel Dropdown */}
+      {isFilterPanelOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setIsFilterPanelOpen(false)}>
+          <div className="absolute top-28 right-6 md:right-margin-desktop z-50 bg-white rounded-xl shadow-2xl border border-slate-200 p-5 w-80 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-label-md text-label-md text-slate-900 font-semibold">Filtros de Análisis</h4>
+              <button onClick={() => setIsFilterPanelOpen(false)} aria-label="Cerrar filtros" className="text-slate-400 hover:text-slate-700 cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-600 mb-1">Rango de Fechas</label>
+                <select className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer">
+                  <option>Últimos 7 Días</option>
+                  <option>Últimos 30 Días</option>
+                  <option>Últimos 90 Días</option>
+                  <option>Personalizado</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-600 mb-1">Tipo de Modelo</label>
+                <select className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer">
+                  <option>Todos</option>
+                  <option>ARIMA</option>
+                  <option>Prophet</option>
+                  <option>Random Forest</option>
+                  <option>Red Neuronal</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-600 mb-1">Estado</label>
+                <div className="flex flex-wrap gap-2">
+                  {['Activo', 'Entrenando', 'Inactivo'].map((s) => (
+                    <label key={s} className="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
+                      <input type="checkbox" className="rounded border-slate-300 text-primary focus:ring-primary" />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <button className="w-full py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-on-primary-fixed-variant transition-colors cursor-pointer">
+                Aplicar Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Training Wizard Overlay */}
+      {isTrainingWizardOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsTrainingWizardOpen(false)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-headline-md text-headline-md text-slate-900">Entrenar Nuevo Modelo</h3>
+              <button onClick={() => setIsTrainingWizardOpen(false)} className="text-slate-400 hover:text-slate-700 cursor-pointer" aria-label="Cerrar">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Nombre del Modelo</label>
+                <input type="text" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40" placeholder="Ej: OEE_Pred_v3.0" />
+              </div>
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Algoritmo</label>
+                <select className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer">
+                  <option>ARIMA</option>
+                  <option>Prophet</option>
+                  <option>Random Forest</option>
+                  <option>LSTM (Red Neuronal)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Métrica Objetivo</label>
+                <select className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-pointer">
+                  <option>Eficiencia OEE</option>
+                  <option>MTBF</option>
+                  <option>Consumo Energético</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Conjunto de Datos</label>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                  <p className="text-sm text-slate-500">Arrastra un archivo CSV o haz clic para seleccionar</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
+              <button onClick={() => setIsTrainingWizardOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-on-primary-fixed-variant transition-colors cursor-pointer">
+                Iniciar Entrenamiento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Model Overlay */}
+      {managingModel && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setManagingModel(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-headline-md text-headline-md text-slate-900">Gestión: {managingModel}</h3>
+              <button onClick={() => setManagingModel(null)} className="text-slate-400 hover:text-slate-700 cursor-pointer" aria-label="Cerrar">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <span className="text-sm text-slate-700">Precisión Actual</span>
+                <span className="text-sm font-semibold text-slate-900">94.2%</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <span className="text-sm text-slate-700">Último Entrenamiento</span>
+                <span className="text-sm font-semibold text-slate-900">15 May 2026</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <span className="text-sm text-slate-700">Versión</span>
+                <span className="text-sm font-semibold text-slate-900">v2.4</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 mt-6 pt-4 border-t border-slate-200">
+              <button className="w-full py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-on-primary-fixed-variant transition-colors cursor-pointer">
+                Re-entrenar Modelo
+              </button>
+              <button className="w-full py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+                Descargar Artefactos
+              </button>
+              <button className="w-full py-2 text-sm font-medium text-error bg-white border border-error/30 rounded-lg hover:bg-error-container transition-colors cursor-pointer">
+                Desactivar Modelo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

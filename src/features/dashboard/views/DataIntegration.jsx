@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Server, Settings, FileText, Globe, Cloud, PlusCircle, Shield, LogIn, RefreshCw, Download, Database, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Server, Settings, FileText, Globe, Cloud, PlusCircle, Shield, LogIn, RefreshCw, Download, Database, AlertTriangle, X } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { getEnterpriseAuditLogs } from '../services/dashboardService';
+import { getEnterpriseAuditLogs, subscribeToIntegrations } from '../services/dashboardService';
 
 const actionConfig = {
   login: { icon: LogIn, label: 'Inicio de Sesión', style: 'bg-surface-container-low text-on-surface border-outline-variant/30' },
@@ -25,16 +26,45 @@ function getInitials(name) {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
+const sourceLabels = {
+  postgresql: 'PostgreSQL',
+  csv: 'CSV Mass Upload',
+  erp: 'ERP API',
+  cloud: 'Cloud Storage',
+  new_source: 'Nueva Fuente',
+};
+
+const iconMap = {
+  postgresql: Server,
+  csv: FileText,
+  erp: Globe,
+  cloud: Cloud,
+  default: Database
+};
+
 export default function DataIntegration() {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [auditLogs, setAuditLogs] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  const [integrations, setIntegrations] = useState([]);
+  const [isLoadingIntegrations, setIsLoadingIntegrations] = useState(true);
+  const [activeModal, setActiveModal] = useState(null);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setActiveModal(null);
+    };
+    if (activeModal) window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [activeModal]);
 
   useEffect(() => {
     if (!currentUser?.eid) return;
 
     let cancelled = false;
     setIsLoadingLogs(true);
+    setIsLoadingIntegrations(true);
 
     getEnterpriseAuditLogs(currentUser.eid)
       .then((logs) => {
@@ -47,98 +77,69 @@ export default function DataIntegration() {
         if (!cancelled) setIsLoadingLogs(false);
       });
 
-    return () => { cancelled = true; };
+    const unsubscribeIntegrations = subscribeToIntegrations(currentUser.eid, (data) => {
+      if (!cancelled) {
+        setIntegrations(data);
+        setIsLoadingIntegrations(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribeIntegrations();
+    };
   }, [currentUser?.eid]);
   return (
     <>
       {/* Integration Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-gutter">
-        {/* Card 1 – Local Database */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-200">
-          <div className="flex justify-between items-start mb-4">
-            <div className="h-12 w-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
-              <Server size={28} />
+        {isLoadingIntegrations ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col min-h-[220px] animate-pulse">
+              <div className="flex justify-between items-start mb-4">
+                <div className="h-12 w-12 rounded-lg bg-slate-200" />
+                <div className="h-5 w-5 bg-slate-200 rounded" />
+              </div>
+              <div className="h-5 w-32 bg-slate-200 rounded mb-2" />
+              <div className="h-4 w-48 bg-slate-200 rounded mb-4 flex-1" />
+              <div className="flex items-center justify-between border-t border-outline-variant/30 pt-4">
+                <div className="h-6 w-24 bg-slate-200 rounded-full" />
+                <div className="h-4 w-16 bg-slate-200 rounded" />
+              </div>
             </div>
-            <button className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-              <Settings size={20} />
-            </button>
-          </div>
-          <h4 className="font-label-md text-label-md text-on-surface mb-1">Local Database</h4>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">PostgreSQL Core DB</p>
-          <div className="flex items-center justify-between border-t border-outline-variant/30 pt-4">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-subtle"></span>
-              Connected
-            </span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Sync: 10m ago</span>
-          </div>
-        </div>
-
-        {/* Card 2 – CSV Mass Upload */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-300">
-          <div className="flex justify-between items-start mb-4">
-            <div className="h-12 w-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
-              <FileText size={28} />
-            </div>
-            <button className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-              <Settings size={20} />
-            </button>
-          </div>
-          <h4 className="font-label-md text-label-md text-on-surface mb-1">CSV Mass Upload</h4>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">Automated batch processing</p>
-          <div className="flex items-center justify-between border-t border-outline-variant/30 pt-4">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-subtle"></span>
-              Connected
-            </span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Sync: 2h ago</span>
-          </div>
-        </div>
-
-        {/* Card 3 – ERP API Integration */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-400">
-          <div className="flex justify-between items-start mb-4">
-            <div className="h-12 w-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
-              <Globe size={28} />
-            </div>
-            <button className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-              <Settings size={20} />
-            </button>
-          </div>
-          <h4 className="font-label-md text-label-md text-on-surface mb-1">ERP API Integration</h4>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">Real-time SAP sync</p>
-          <div className="flex items-center justify-between border-t border-outline-variant/30 pt-4">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-subtle"></span>
-              Connected
-            </span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Sync: Just now</span>
-          </div>
-        </div>
-
-        {/* Card 4 – Cloud Storage */}
-        <div className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up delay-500">
-          <div className="flex justify-between items-start mb-4">
-            <div className="h-12 w-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
-              <Cloud size={28} />
-            </div>
-            <button className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
-              <Settings size={20} />
-            </button>
-          </div>
-          <h4 className="font-label-md text-label-md text-on-surface mb-1">Cloud Storage</h4>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">AWS S3 Data Lake</p>
-          <div className="flex items-center justify-between border-t border-outline-variant/30 pt-4">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-subtle"></span>
-              Connected
-            </span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Sync: 1h ago</span>
-          </div>
-        </div>
+          ))
+        ) : (
+          integrations.map((integration, index) => {
+            const IconComponent = iconMap[integration.type] || iconMap.default;
+            const isConnected = integration.status === 'connected' || integration.status === 'Conectado';
+            const delayClass = `delay-${Math.min((index + 2) * 100, 500)}`;
+            
+            return (
+              <div key={integration.id || index} className={`bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-6 shadow-sm flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out animate-fade-in-up ${delayClass}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="h-12 w-12 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+                    <IconComponent size={28} />
+                  </div>
+                  <button onClick={() => setActiveModal(integration.type)} aria-label={`Configurar ${integration.name}`} className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+                    <Settings size={20} />
+                  </button>
+                </div>
+                <h4 className="font-label-md text-label-md text-on-surface mb-1">{integration.name || sourceLabels[integration.type] || 'Desconocida'}</h4>
+                <p className="font-body-sm text-body-sm text-on-surface-variant mb-4 flex-1">{integration.description || 'Sin descripción'}</p>
+                <div className="flex items-center justify-between border-t border-outline-variant/30 pt-4">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm ${isConnected ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-variant text-on-surface-variant'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-primary animate-pulse-subtle' : 'bg-slate-400'}`}></span>
+                    {isConnected ? 'Connected' : 'Disconnected'}
+                  </span>
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">Sync: {formatTimestamp(integration.lastSync) || '—'}</span>
+                </div>
+              </div>
+            );
+          })
+        )}
 
         {/* Add New Card */}
-        <button className="bg-transparent border-2 border-dashed border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer min-h-[220px] animate-fade-in-up delay-500">
+        <button onClick={() => setActiveModal('new_source')} className="bg-transparent border-2 border-dashed border-outline-variant rounded-xl p-6 flex flex-col items-center justify-center text-on-surface-variant hover:text-primary hover:border-primary transition-all cursor-pointer min-h-[220px] animate-fade-in-up delay-500">
           <PlusCircle size={36} className="mb-3" />
           <span className="font-label-md text-label-md">Añadir nueva fuente de datos</span>
         </button>
@@ -162,10 +163,10 @@ export default function DataIntegration() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="py-3 px-6 text-sm text-slate-900 font-semibold">User</th>
-                <th className="py-3 px-6 text-sm text-slate-900 font-semibold">Action</th>
-                <th className="py-3 px-6 text-sm text-slate-900 font-semibold">Timestamp</th>
-                <th className="py-3 px-6 text-sm text-slate-900 font-semibold">IP Address</th>
+                <th scope="col" className="py-3 px-6 text-sm text-slate-900 font-semibold">User</th>
+                <th scope="col" className="py-3 px-6 text-sm text-slate-900 font-semibold">Action</th>
+                <th scope="col" className="py-3 px-6 text-sm text-slate-900 font-semibold">Timestamp</th>
+                <th scope="col" className="py-3 px-6 text-sm text-slate-900 font-semibold">IP Address</th>
               </tr>
             </thead>
             <tbody className="text-sm text-slate-600">
@@ -219,11 +220,86 @@ export default function DataIntegration() {
         {/* Table Footer */}
         <div className="border-t border-outline-variant/30 p-4 flex justify-between items-center bg-surface-container-lowest">
           <span className="font-body-sm text-body-sm text-on-surface-variant">Mostrando {auditLogs.length} registro{auditLogs.length !== 1 ? 's' : ''} de auditoría</span>
-          <button className="font-label-sm text-label-sm text-primary hover:text-primary-container transition-colors font-semibold uppercase tracking-wide">
+          <button onClick={() => navigate('/dashboard/audit-trail')} className="font-label-sm text-label-sm text-primary hover:text-primary-container transition-colors font-semibold uppercase tracking-wide">
             View Full Audit Trail
           </button>
         </div>
       </div>
+
+      {/* Modal Overlay */}
+      {activeModal && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setActiveModal(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 animate-fade-in-up"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-headline-md text-headline-md text-slate-900">
+                Configuración de Fuente: {sourceLabels[activeModal]}
+              </h3>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                aria-label="Cerrar"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Host / URL</label>
+                <input
+                  type="text"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                  placeholder={activeModal === 'postgresql' ? 'localhost:5432' : activeModal === 'csv' ? 's3://my-bucket/uploads' : activeModal === 'erp' ? 'https://sap.example.com/api' : activeModal === 'cloud' ? 'https://s3.amazonaws.com/mybucket' : 'hostname o URL'}
+                />
+              </div>
+              <div>
+                <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Base de Datos</label>
+                <input
+                  type="text"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                  placeholder={activeModal === 'postgresql' ? 'predictive_db' : activeModal === 'csv' ? 'raw_uploads' : activeModal === 'erp' ? 'erp_production' : activeModal === 'cloud' ? 'data_lake' : 'nombre del esquema'}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Usuario</label>
+                  <input
+                    type="text"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                    placeholder="admin"
+                  />
+                </div>
+                <div>
+                  <label className="block font-label-sm text-label-sm text-slate-700 mb-1">Contraseña</label>
+                  <input
+                    type="password"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
+              <button
+                onClick={() => setActiveModal(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-container hover:text-on-primary-container transition-colors cursor-pointer">
+                Guardar Configuración
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
