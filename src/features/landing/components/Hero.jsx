@@ -6,7 +6,7 @@ import Button from '../../../components/Button';
 const Hero = () => {
   const navigate = useNavigate();
   return (
-    <section className="w-full px-margin-desktop py-20 max-w-container-max mx-auto overflow-hidden">
+    <section id="features" className="w-full px-margin-desktop py-20 max-w-container-max mx-auto overflow-hidden scroll-mt-28">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Left Content */}
         <div className="flex flex-col gap-6">

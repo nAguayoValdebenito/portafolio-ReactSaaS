@@ -67,7 +67,7 @@ export default function ForgotPassword() {
         </div>
 
         <div className="text-center mt-8 opacity-0-init animate-stagger-6">
-          <p className="font-label-sm text-label-sm text-outline">&copy; 2024 PredictiveSaaS. Acceso seguro.</p>
+          <p className="font-label-sm text-label-sm text-outline">&copy; {new Date().getFullYear()} PredictiveSaaS. Acceso seguro.</p>
         </div>
       </main>
     </div>

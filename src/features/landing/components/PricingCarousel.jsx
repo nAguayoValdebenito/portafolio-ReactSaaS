@@ -26,7 +26,7 @@ const PricingCarousel = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} aria-label="Precios" className="w-full py-20 px-margin-desktop bg-surface-container-low border-t border-outline-variant reveal-on-scroll">
+    <section ref={sectionRef} id="precios" aria-label="Precios" className="w-full py-20 px-margin-desktop bg-surface-container-low border-t border-outline-variant reveal-on-scroll scroll-mt-28">
       <div className="max-w-container-max mx-auto text-center mb-12">
         <h2 className="font-headline-lg text-headline-lg text-primary mb-4">Soluciones Flexibles. Resultados Reales.</h2>
         <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mx-auto">Elige el plan que mejor se adapte al volumen de tus datos y a las necesidades de tu equipo.</p>
@@ -116,7 +116,7 @@ const PricingCarousel = () => {
         </div>
       </div>
       <p className="text-center font-body-sm text-body-sm text-on-surface-variant mt-12 max-w-2xl mx-auto">
-        * Todos los precios son por sucursal. ¿Tienes más de una? <a className="text-primary underline" href="#">Escríbenos</a> para un precio especial.
+        * Todos los precios son por sucursal. ¿Tienes más de una? <a className="text-primary underline" href="mailto:soporte@predictivesaas.com?subject=Consulta de Planes Industriales">Escríbenos</a> para un precio especial.
       </p>
     </section>
   );
